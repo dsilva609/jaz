@@ -1,6 +1,4 @@
-﻿using jaz.Data;
-using System;
-using System.Reflection;
+﻿using jaz.Logic;
 
 namespace jaz
 {
@@ -8,11 +6,16 @@ namespace jaz
 	{
 		public static void Main(string[] args)
 		{
-			var parser = new FileParser();
-
-			var data = parser.ReadData(@"Resources\foo.jaz");
-
-			Console.WriteLine(data.Length);
+			/*	Flow should be:
+			 *		Create Interpreter object
+			 *			pass file to interpret
+			 *		interpreter parses instruction
+			 *			saves to Instruction object
+			 *		list of parsed instructions are then executed
+			 *		output of executed instructions are displayed
+			 *			file or console?
+			 */
+			new Interpreter(@"Resources\foo.jaz").Execute();
 		}
 	}
 }

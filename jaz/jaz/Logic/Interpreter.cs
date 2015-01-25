@@ -1,4 +1,6 @@
 ﻿using jaz.Data;
+using jaz.Objects;
+using System.Collections.Generic;
 
 namespace jaz.Logic
 {
@@ -6,7 +8,8 @@ namespace jaz.Logic
 	{
 		private FileParser _fileParser;
 		private InstructionParser _instructionParser;
-		private string[] _instructions;
+		private string[] _data;
+		private List<Instruction> _instructions;
 
 		public Interpreter(string filename)
 		{
@@ -16,8 +19,8 @@ namespace jaz.Logic
 
 		public void Execute()
 		{
-			this._instructions = this._fileParser.ExecuteRead();
-			this._instructionParser.Execute(ref this._instructions);
+			this._data = this._fileParser.ExecuteRead();
+			this._instructions = this._instructionParser.Execute(ref this._data);
 		}
 	}
 }

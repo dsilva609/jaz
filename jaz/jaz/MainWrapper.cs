@@ -6,7 +6,6 @@ namespace jaz
 	{
 		public static void Main(string[] args)
 		{
-
 			/*	Flow should be:
 			 *		Create Interpreter object
 			 *			pass file to interpret
@@ -16,14 +15,7 @@ namespace jaz
 			 *		output of executed instructions are displayed
 			 *			file or console?
 			 */
-			var interpreter = new Interpreter(@"Resources\foo.jaz");
-
-			interpreter.Execute();
-			//var parser = new FileParser();
-
-			//var data = parser.ReadData(@"Resources\foo.jaz");
-
-			//		Console.WriteLine(data.Length);
+			new Interpreter(@"Resources\foo.jaz").Execute();
 		}
 	}
 }

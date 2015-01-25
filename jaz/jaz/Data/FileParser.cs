@@ -5,9 +5,15 @@ namespace jaz.Data
 {
 	public class FileParser
 	{
-		public String[] ReadData(string filename)
+		private readonly string _filename;
+
+		public FileParser(string filename)
 		{
-			return File.ReadAllLines(filename);
+			this._filename = filename;
+		}
+		public String[] ExecuteRead()
+		{
+			return File.ReadAllLines(this._filename);
 
 		}
 	}

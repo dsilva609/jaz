@@ -1,6 +1,5 @@
 ﻿using jaz.Data;
 using System;
-using System.IO;
 using System.Reflection;
 
 namespace jaz
@@ -11,12 +10,9 @@ namespace jaz
 		{
 			var parser = new FileParser();
 
-			var data = parser.ReadData(Assembly.GetExecutingAssembly().Location.Replace("\\bin\\Debug\\jaz.exe", "") + @"\\Resources\\foo.jaz");//@"..\..\Resources\foo.jaz");
-
+			var data = parser.ReadData(@"Resources\foo.jaz");
 
 			Console.WriteLine(data.Length);
-
-			Console.WriteLine(new Uri(@"Resources\foo.jaz", UriKind.Relative).ToString());
 		}
 	}
 }

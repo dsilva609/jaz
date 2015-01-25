@@ -42,6 +42,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\FileParser.cs" />
+    <Compile Include="Enums\Aritmetic.cs" />
+    <Compile Include="Enums\Control.cs" />
+    <Compile Include="Enums\Logical.cs" />
+    <Compile Include="Enums\Output.cs" />
+    <Compile Include="Enums\Relational.cs" />
+    <Compile Include="Enums\Stack.cs" />
+    <Compile Include="Enums\Subprogram.cs" />
     <Compile Include="MainWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -54,6 +61,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

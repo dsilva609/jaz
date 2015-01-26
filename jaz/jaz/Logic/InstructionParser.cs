@@ -32,13 +32,13 @@ namespace jaz.Logic
 				}
 				else if (temp.Contains(" "))
 				{
-					instruction.Name = temp.Substring(0, temp.IndexOf(" "));
+					instruction.Command = temp.Substring(0, temp.IndexOf(" "));
 					instruction.Value = temp.Substring(temp.IndexOf(" "));
 					Console.WriteLine(temp.Substring(0, temp.IndexOf(" ")));
 				}
 				else
 				{
-					instruction.Name = temp;
+					instruction.Command = temp;
 					Console.WriteLine(temp);
 				}
 				this._instructionList.Add(instruction);

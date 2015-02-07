@@ -51,12 +51,17 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="Resources\factProc.jaz" />
+    <None Include="Resources\factProc.out" />
     <None Include="Resources\foo.jaz">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Resources\foo.out">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Resources\operatorsTest.jaz" />
+    <None Include="Resources\operatorsTest.out" />
+    <None Include="Resources\recFact.jaz" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -11,10 +11,10 @@ namespace jaz.Data
 		{
 			this._filename = filename;
 		}
+
 		public String[] ExecuteRead()
 		{
 			return File.ReadAllLines(this._filename);
-
 		}
 	}
 }

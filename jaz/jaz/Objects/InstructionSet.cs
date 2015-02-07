@@ -11,7 +11,7 @@
 		public const string Top = ":=";
 		public const string Copy = "copy";
 
-		#endregion
+		#endregion Stack Manipulation
 
 		#region Control Flow
 
@@ -21,7 +21,7 @@
 		public const string GoTrue = "gotrue";
 		public const string Halt = "halt";
 
-		#endregion
+		#endregion Control Flow
 
 		#region Arithmetic Operators
 
@@ -31,7 +31,7 @@
 		public const string Division = "/";
 		public const string Remainder = "div";
 
-		#endregion
+		#endregion Arithmetic Operators
 
 		#region Logical Operators
 
@@ -39,7 +39,7 @@
 		public const string NOT = "!";
 		public const string OR = "|";
 
-		#endregion
+		#endregion Logical Operators
 
 		#region Relational Operators
 
@@ -50,14 +50,14 @@
 		public const string Greater = ">";
 		public const string Equal = "=";
 
-		#endregion
+		#endregion Relational Operators
 
 		#region Output
 
 		public const string Print = "print";
 		public const string Show = "show";
 
-		#endregion
+		#endregion Output
 
 		#region Subprogram Control
 
@@ -66,6 +66,6 @@
 		public const string Return = "return";
 		public const string Call = "call";
 
-		#endregion
+		#endregion Subprogram Control
 	}
 }

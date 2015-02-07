@@ -12,6 +12,7 @@ namespace jaz.Logic
 		{
 			this._instructionList = new List<Instruction>();
 		}
+
 		public List<Instruction> Execute(ref string[] data)
 		{
 			this.Parse(ref data);

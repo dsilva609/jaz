@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\FileParser.cs" />
+    <Compile Include="Logic\InstructionSetHandler.cs" />
     <Compile Include="Logic\Interpreter.cs" />
     <Compile Include="Logic\InstructionParser.cs" />
     <Compile Include="MainWrapper.cs" />

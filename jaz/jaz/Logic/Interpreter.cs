@@ -9,6 +9,7 @@ namespace jaz.Logic
 	{
 		private FileParser _fileParser;
 		private InstructionParser _instructionParser;
+		private InstructionSetHandler _instructionSetHandler;
 		private string[] _data;
 		private List<Instruction> _instructions;
 
@@ -16,6 +17,7 @@ namespace jaz.Logic
 		{
 			this._fileParser = new FileParser(filename);
 			this._instructionParser = new InstructionParser();
+			this._instructionSetHandler = new InstructionSetHandler();
 
 			//--add test file selector
 		}

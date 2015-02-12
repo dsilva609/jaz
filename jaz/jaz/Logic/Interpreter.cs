@@ -16,6 +16,8 @@ namespace jaz.Logic
 		{
 			this._fileParser = new FileParser(filename);
 			this._instructionParser = new InstructionParser();
+
+			//--add test file selector
 		}
 
 		public void Execute()

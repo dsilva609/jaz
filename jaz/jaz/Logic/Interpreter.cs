@@ -1,6 +1,5 @@
 ﻿using jaz.Data;
 using jaz.Objects;
-using System;
 using System.Collections.Generic;
 
 namespace jaz.Logic
@@ -9,6 +8,7 @@ namespace jaz.Logic
 	{
 		private FileParser _fileParser;
 		private InstructionParser _instructionParser;
+		private InstructionSetHandler _instructionSetHandler;
 		private string[] _data;
 		private List<Instruction> _instructions;
 
@@ -16,6 +16,7 @@ namespace jaz.Logic
 		{
 			this._fileParser = new FileParser(filename);
 			this._instructionParser = new InstructionParser();
+			this._instructionSetHandler = new InstructionSetHandler();
 
 			//--add test file selector
 		}
@@ -27,109 +28,140 @@ namespace jaz.Logic
 
 			foreach (var item in this._instructions)
 			{
-				Console.WriteLine(DetermineInstructionOperation(item.Command));
+				DetermineAndExecuteInstructionOperation(item);
 			}
 		}
 
-		private string DetermineInstructionOperation(string value)
+		private void DetermineAndExecuteInstructionOperation(Instruction item)
 		{
-			switch (value)
+			switch (item.Command)
 			{
 				default:
-					return string.Empty;
+					break;
 
 				case InstructionSet.Addition:
-					return InstructionSet.Addition;
+					this._instructionSetHandler.Addition();
+					break;
 
 				case InstructionSet.AND:
-					return InstructionSet.AND;
+					this._instructionSetHandler.AND();
+					break;
 
 				case InstructionSet.Begin:
-					return InstructionSet.Begin;
+					this._instructionSetHandler.Begin();
+					break;
 
 				case InstructionSet.Call:
-					return InstructionSet.Call;
+					this._instructionSetHandler.Call();
+					break;
 
 				case InstructionSet.Copy:
-					return InstructionSet.Copy;
+					this._instructionSetHandler.Copy();
+					break;
 
 				case InstructionSet.Division:
-					return InstructionSet.Division;
+					this._instructionSetHandler.Division();
+					break;
 
 				case InstructionSet.End:
-					return InstructionSet.End;
+					this._instructionSetHandler.End();
+					break;
 
 				case InstructionSet.Equal:
-					return InstructionSet.Equal;
+					this._instructionSetHandler.Equal();
+					break;
 
 				case InstructionSet.GoFalse:
-					return InstructionSet.GoFalse;
+					this._instructionSetHandler.GoFalse();
+					break;
 
 				case InstructionSet.GoTo:
-					return InstructionSet.GoTo;
+					this._instructionSetHandler.GoTo();
+					break;
 
 				case InstructionSet.GoTrue:
-					return InstructionSet.GoTrue;
+					this._instructionSetHandler.GoTrue();
+					break;
 
 				case InstructionSet.Greater:
-					return InstructionSet.Greater;
+					this._instructionSetHandler.Greater();
+					break;
 
 				case InstructionSet.GreaterOrEqual:
-					return InstructionSet.GreaterOrEqual;
+					this._instructionSetHandler.GreaterOrEqual();
+					break;
 
 				case InstructionSet.Halt:
-					return InstructionSet.Halt;
+					this._instructionSetHandler.Halt();
+					break;
 
 				case InstructionSet.Label:
-					return InstructionSet.Label;
+					this._instructionSetHandler.Label();
+					break;
 
 				case InstructionSet.Lesser:
-					return InstructionSet.Lesser;
+					this._instructionSetHandler.Lesser();
+					break;
 
 				case InstructionSet.LesserOrEqual:
-					return InstructionSet.LesserOrEqual;
+					this._instructionSetHandler.LesserOrEqual();
+					break;
 
 				case InstructionSet.LValue:
-					return InstructionSet.LValue;
+					this._instructionSetHandler.LValue(item.Value);
+					break;
 
 				case InstructionSet.Multuplication:
-					return InstructionSet.Multuplication;
+					this._instructionSetHandler.Multuplication();
+					break;
 
 				case InstructionSet.NOT:
-					return InstructionSet.NOT;
+					this._instructionSetHandler.NOT();
+					break;
 
 				case InstructionSet.NotEqual:
-					return InstructionSet.NotEqual;
+					this._instructionSetHandler.NotEqual();
+					break;
 
 				case InstructionSet.OR:
-					return InstructionSet.OR;
+					this._instructionSetHandler.OR();
+					break;
 
 				case InstructionSet.Pop:
-					return InstructionSet.Pop;
+					this._instructionSetHandler.Pop();
+					break;
 
 				case InstructionSet.Print:
-					return InstructionSet.Print;
+					this._instructionSetHandler.Print();
+					break;
 
 				case InstructionSet.Push:
-					return InstructionSet.Push;
+					this._instructionSetHandler.Push(item);
+					break;
 
 				case InstructionSet.Remainder:
-					return InstructionSet.Remainder;
+					this._instructionSetHandler.Remainder();
+					break;
 
 				case InstructionSet.Return:
-					return InstructionSet.Return;
+					this._instructionSetHandler.Return();
+					break;
 
 				case InstructionSet.RValue:
-					return InstructionSet.RValue;
+					this._instructionSetHandler.RValue(item.Value);
+					break;
 
 				case InstructionSet.Show:
-					return InstructionSet.Show;
+					this._instructionSetHandler.Show(item.Value);
+					break;
 
 				case InstructionSet.Subtraction:
-					return InstructionSet.Subtraction;
+					this._instructionSetHandler.Subtraction();
+					break;
 
 				case InstructionSet.Top:
-					return InstructionSet.Top;
+					this._instructionSetHandler.Top();
+					break;
 			}
 		}
 	}

@@ -5,5 +5,7 @@
 		public string Command { get; set; }
 
 		public string Value { get; set; }
+
+		//--add a IsLocalVariable boolean?
 	}
 }

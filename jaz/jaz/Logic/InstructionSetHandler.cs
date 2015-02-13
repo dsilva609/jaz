@@ -73,7 +73,7 @@ namespace jaz.Logic
 
 		public virtual void Halt()
 		{
-			Environment.Exit(0);
+			Environment.Exit(0);//should this be a complete system exit?
 		}
 
 		#endregion Control Flow

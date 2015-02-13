@@ -59,7 +59,7 @@ namespace jaz.Logic
 
 		#region Control Flow
 
-		public virtual void Label()
+		public virtual void Label() //--need to figure out way to save methods, list of queues?
 		{ throw new NotImplementedException(); }
 
 		public virtual void GoTo()
@@ -254,7 +254,7 @@ namespace jaz.Logic
 
 		#region Subprogram Control
 
-		public virtual void Begin()
+		public virtual void Begin() //--run through a queue?
 		{ throw new NotImplementedException(); }
 
 		public virtual void End()

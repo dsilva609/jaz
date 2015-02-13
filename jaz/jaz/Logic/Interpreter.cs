@@ -28,13 +28,13 @@ namespace jaz.Logic
 
 			foreach (var item in this._instructions)
 			{
-				DetermineAndExecuteInstructionOperation(item.Command);
+				DetermineAndExecuteInstructionOperation(item);
 			}
 		}
 
-		private void DetermineAndExecuteInstructionOperation(string value)
+		private void DetermineAndExecuteInstructionOperation(Instruction item)
 		{
-			switch (value)
+			switch (item.Command)
 			{
 				default:
 					break;
@@ -108,7 +108,7 @@ namespace jaz.Logic
 					break;
 
 				case InstructionSet.LValue:
-					this._instructionSetHandler.LValue();
+					this._instructionSetHandler.LValue(item.Value);
 					break;
 
 				case InstructionSet.Multuplication:
@@ -136,7 +136,7 @@ namespace jaz.Logic
 					break;
 
 				case InstructionSet.Push:
-					this._instructionSetHandler.Push();
+					this._instructionSetHandler.Push(item);
 					break;
 
 				case InstructionSet.Remainder:
@@ -148,11 +148,11 @@ namespace jaz.Logic
 					break;
 
 				case InstructionSet.RValue:
-					this._instructionSetHandler.RValue();
+					this._instructionSetHandler.RValue(item.Value);
 					break;
 
 				case InstructionSet.Show:
-					this._instructionSetHandler.Show();
+					this._instructionSetHandler.Show(item.Value);
 					break;
 
 				case InstructionSet.Subtraction:

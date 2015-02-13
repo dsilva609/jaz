@@ -15,7 +15,7 @@ namespace jaz
 			 *		output of executed instructions are displayed
 			 *			file or console?
 			 */
-			new Interpreter(@"Resources\foo.jaz").Execute();
+			new Interpreter(@"Resources\operatorsTest.jaz").Execute();
 		}
 	}
 }

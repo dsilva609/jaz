@@ -49,7 +49,7 @@ namespace jaz.Logic
 			this._operationStack.Pop();
 		}
 
-		public virtual void Top()
+		public virtual void ReplaceTop()
 		{ throw new NotImplementedException(); }
 
 		public virtual void Copy()

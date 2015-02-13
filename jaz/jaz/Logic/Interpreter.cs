@@ -159,8 +159,8 @@ namespace jaz.Logic
 					this._instructionSetHandler.Subtraction();
 					break;
 
-				case InstructionSet.Top:
-					this._instructionSetHandler.Top();
+				case InstructionSet.ReplaceTop:
+					this._instructionSetHandler.ReplaceTop();
 					break;
 			}
 		}

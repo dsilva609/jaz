@@ -8,7 +8,7 @@
 		public const string RValue = "rvalue";
 		public const string LValue = "lvalue";
 		public const string Pop = "pop";
-		public const string Top = ":=";
+		public const string ReplaceTop = ":=";
 		public const string Copy = "copy";
 
 		#endregion Stack Manipulation

@@ -26,10 +26,7 @@ namespace jaz.Logic
 			this._data = this._fileParser.ExecuteRead();
 			this._instructions = this._instructionParser.Execute(ref this._data);
 
-			foreach (var item in this._instructions)
-			{
-				this._instructionSetHandler.DetermineAndExecuteInstructionOperation(item);
-			}
+			this._instructionSetHandler.Run(this._instructions);
 		}
 	}
 }

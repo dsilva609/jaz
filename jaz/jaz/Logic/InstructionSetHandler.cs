@@ -16,7 +16,15 @@ namespace jaz.Logic
 			this._symbolTable = new Dictionary<string, object>();
 		}
 
-		public void DetermineAndExecuteInstructionOperation(Instruction item)
+		public void Run(List<Instruction> instructions)
+		{
+			foreach (var item in instructions)
+			{
+				this.DetermineAndExecuteInstructionOperation(item);
+			}
+		}
+
+		private void DetermineAndExecuteInstructionOperation(Instruction item)
 		{
 			switch (item.Command)
 			{
@@ -151,7 +159,7 @@ namespace jaz.Logic
 
 		#region Stack Manipulation
 
-		public virtual void Push(object item)
+		private void Push(object item)
 		{
 			if (item.GetType() == typeof(Instruction))
 			{
@@ -162,7 +170,7 @@ namespace jaz.Logic
 				this._operationStack.Push(item.ToString());//needs to get value of variable this is being set to if there is one
 		}
 
-		public virtual void RValue(object value)
+		private void RValue(object value)
 		{
 			//value = 0;
 			this._operationStack.Push(0);//make sure these values are correct
@@ -171,40 +179,40 @@ namespace jaz.Logic
 			//this._symbolTable[value.Command] = value.Value;//probably not correct for now
 		}
 
-		public virtual void LValue(string address)
+		private void LValue(string address)
 		{
 			this._operationStack.Push(address);
 			this._symbolTable.Add(address, null);
 		}
 
-		public virtual void Pop()
+		private void Pop()
 		{
 			this._operationStack.Pop();
 		}
 
-		public virtual void ReplaceTop()
+		private void ReplaceTop()
 		{ throw new NotImplementedException(); }
 
-		public virtual void Copy()
+		private void Copy()
 		{ throw new NotImplementedException(); }
 
 		#endregion Stack Manipulation
 
 		#region Control Flow
 
-		public virtual void Label() //--need to figure out way to save methods, list of queues?
+		private void Label() //--need to figure out way to save methods, list of queues?
 		{ throw new NotImplementedException(); }
 
-		public virtual void GoTo()
+		private void GoTo()
 		{ throw new NotImplementedException(); }
 
-		public virtual void GoFalse()
+		private void GoFalse()
 		{ throw new NotImplementedException(); }
 
-		public virtual void GoTrue()
+		private void GoTrue()
 		{ throw new NotImplementedException(); }
 
-		public virtual void Halt()
+		private void Halt()
 		{
 			Environment.Exit(0);//should this be a complete system exit?
 		}
@@ -213,7 +221,7 @@ namespace jaz.Logic
 
 		#region Arithmetic Operators
 
-		public virtual void Addition()
+		private void Addition()
 		{
 			var operand1 = Convert.ToInt32(this._operationStack.Pop());
 			var operand2 = Convert.ToInt32(this._operationStack.Pop());
@@ -223,7 +231,7 @@ namespace jaz.Logic
 			this._operationStack.Push(result);
 		}
 
-		public virtual void Subtraction()
+		private void Subtraction()
 		{
 			var operand1 = Convert.ToInt32(this._operationStack.Pop().ToString());
 			var operand2 = Convert.ToInt32(this._operationStack.Pop().ToString());
@@ -233,7 +241,7 @@ namespace jaz.Logic
 			this._operationStack.Push(result);
 		}
 
-		public virtual void Multuplication()
+		private void Multuplication()
 		{
 			var operand1 = Convert.ToInt32(this._operationStack.Pop());
 			var operand2 = Convert.ToInt32(this._operationStack.Pop());
@@ -243,7 +251,7 @@ namespace jaz.Logic
 			this._operationStack.Push(result);
 		}
 
-		public virtual void Division()
+		private void Division()
 		{
 			var operand1 = Convert.ToInt32(this._operationStack.Pop());
 			var operand2 = Convert.ToInt32(this._operationStack.Pop());
@@ -253,7 +261,7 @@ namespace jaz.Logic
 			this._operationStack.Push(result);
 		}
 
-		public virtual void Remainder()
+		private void Remainder()
 		{
 			var operand1 = Convert.ToInt32(this._operationStack.Pop());
 			var operand2 = Convert.ToInt32(this._operationStack.Pop());
@@ -267,7 +275,7 @@ namespace jaz.Logic
 
 		#region Logical Operators
 
-		public virtual void AND()
+		private void AND()
 		{
 			var operand1 = Convert.ToInt32(this._operationStack.Pop());
 			var operand2 = Convert.ToInt32(this._operationStack.Pop());
@@ -277,7 +285,7 @@ namespace jaz.Logic
 			this._operationStack.Push(result);
 		}
 
-		public virtual void NOT()
+		private void NOT()
 		{
 			var operand = Convert.ToInt32(this._operationStack.Pop());
 			int result = 0;
@@ -292,7 +300,7 @@ namespace jaz.Logic
 			this._operationStack.Push(Convert.ToInt32(result));
 		}
 
-		public virtual void OR()
+		private void OR()
 		{
 			var operand1 = Convert.ToInt32(this._operationStack.Pop());
 			var operand2 = Convert.ToInt32(this._operationStack.Pop());
@@ -306,7 +314,7 @@ namespace jaz.Logic
 
 		#region Relational Operators
 
-		public virtual void NotEqual()
+		private void NotEqual()
 		{
 			var operand1 = Convert.ToInt32(this._operationStack.Pop());
 			var operand2 = Convert.ToInt32(this._operationStack.Pop());
@@ -316,7 +324,7 @@ namespace jaz.Logic
 			this._operationStack.Push(result);
 		}
 
-		public virtual void LesserOrEqual()
+		private void LesserOrEqual()
 		{
 			var operand1 = Convert.ToInt32(this._operationStack.Pop());
 			var operand2 = Convert.ToInt32(this._operationStack.Pop());
@@ -326,7 +334,7 @@ namespace jaz.Logic
 			this._operationStack.Push(result);
 		}
 
-		public virtual void GreaterOrEqual()
+		private void GreaterOrEqual()
 		{
 			var operand1 = Convert.ToInt32(this._operationStack.Pop());
 			var operand2 = Convert.ToInt32(this._operationStack.Pop());
@@ -336,7 +344,7 @@ namespace jaz.Logic
 			this._operationStack.Push(result);
 		}
 
-		public virtual void Lesser()
+		private void Lesser()
 		{
 			var operand1 = Convert.ToInt32(this._operationStack.Pop());
 			var operand2 = Convert.ToInt32(this._operationStack.Pop());
@@ -346,7 +354,7 @@ namespace jaz.Logic
 			this._operationStack.Push(result);
 		}
 
-		public virtual void Greater()
+		private void Greater()
 		{
 			var operand1 = Convert.ToInt32(this._operationStack.Pop());
 			var operand2 = Convert.ToInt32(this._operationStack.Pop());
@@ -356,7 +364,7 @@ namespace jaz.Logic
 			this._operationStack.Push(result);
 		}
 
-		public virtual void Equal()
+		private void Equal()
 		{
 			var operand1 = Convert.ToInt32(this._operationStack.Pop());
 			var operand2 = Convert.ToInt32(this._operationStack.Pop());
@@ -370,7 +378,7 @@ namespace jaz.Logic
 
 		#region Output
 
-		public virtual void Print()
+		private void Print()
 		{
 			var value = this._operationStack.Peek();
 
@@ -378,7 +386,7 @@ namespace jaz.Logic
 			Console.WriteLine(value);
 		}
 
-		public virtual void Show(object value)
+		private void Show(object value)
 		{
 			Console.WriteLine(value);
 		}
@@ -387,16 +395,16 @@ namespace jaz.Logic
 
 		#region Subprogram Control
 
-		public virtual void Begin() //--run through a queue?
+		private void Begin() //--run through a queue?
 		{ throw new NotImplementedException(); }
 
-		public virtual void End()
+		private void End()
 		{ throw new NotImplementedException(); }
 
-		public virtual void Return()
+		private void Return()
 		{ throw new NotImplementedException(); }
 
-		public virtual void Call()
+		private void Call()
 		{ throw new NotImplementedException(); }
 
 		#endregion Subprogram Control

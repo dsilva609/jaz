@@ -15,7 +15,7 @@ namespace jaz
 			 *		output of executed instructions are displayed
 			 *			file or console?
 			 */
-			new Interpreter(@"Resources\operatorsTest.jaz").Execute();
+			new Interpreter(@"Resources\factProc.jaz").Execute();//--remove parameter
 		}
 	}
 }

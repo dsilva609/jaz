@@ -34,7 +34,7 @@ namespace jaz.Logic
 				else if (temp.Contains(" "))
 				{
 					instruction.Command = temp.Substring(0, temp.IndexOf(" "));
-					instruction.Value = temp.Substring(temp.IndexOf(" "));
+					instruction.Value = temp.Substring(temp.IndexOf(" ") + 1);
 					Console.WriteLine(temp.Substring(0, temp.IndexOf(" ")));
 				}
 				else

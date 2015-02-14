@@ -23,7 +23,7 @@ namespace jaz.Logic
 		{
 			Guid currentBeginGUID = new Guid();
 			//Guid currentFunctionGUID = new Guid();
-			Guid currentCoupledGUID = new Guid();
+			Guid currentCoupledLabelReturnGUID = new Guid();
 			bool callAndLabelAreCoupled = false;//is this needed?
 			string currentCallName = string.Empty;
 
@@ -45,14 +45,16 @@ namespace jaz.Logic
 					instruction.Value = temp.Substring(temp.IndexOf(" ") + 1);
 					instruction.GUID = Guid.NewGuid();
 
-					if (instruction.Command == InstructionSet.Call)
+					//if (instruction.Command == InstructionSet.Call)
+					//	{
+					//		currentCoupledGUID = instruction.GUID;
+					//		currentCallName = instruction.Value;
+					//		callAndLabelAreCoupled = true;
+					//	}
+					if (instruction.Command == InstructionSet.Label)
 					{
-						currentCoupledGUID = instruction.GUID;
-						currentCallName = instruction.Value;
-					}
-					if (instruction.Command == InstructionSet.Label && instruction.Value == currentCallName)
-					{
-						instruction.GUID = currentCoupledGUID;
+						currentCoupledLabelReturnGUID = instruction.GUID;
+						//	callAndLabelAreCoupled = false;
 					}
 					//Console.WriteLine(temp.Substring(0, temp.IndexOf(" ")));
 				}
@@ -66,8 +68,8 @@ namespace jaz.Logic
 					if (instruction.Command == InstructionSet.End)
 						instruction.GUID = currentBeginGUID;//make sure these are not duplicated
 
-					if (instruction.Command == InstructionSet.Return)
-						instruction.GUID = currentCoupledGUID;//make sure these are not duplicated
+					if (instruction.Command == InstructionSet.Return)//calls are not always defined before labels, so labels and calls need to be coupled first then calls to label/couple pairs
+						instruction.GUID = currentCoupledLabelReturnGUID;//make sure these are not duplicated
 
 					//Console.WriteLine(temp);
 				}
@@ -75,6 +77,18 @@ namespace jaz.Logic
 
 				instruction = null;
 				temp = null;
+			}
+		}
+
+		private void AssociateCoupling()
+		{
+			var calls = this._instructionList.FindAll(x => x.Command == InstructionSet.Call);
+
+			foreach (var item in calls)
+			{
+				Instruction label = this._instructionList.Find(x => x.Command == InstructionSet.Label && x.Value == item.Value);
+				this._instructionList[this._instructionList.IndexOf(label)].GUID = item.GUID;
+				this._instructionList[this._instructionList.FindIndex(x => x.Command == InstructionSet.Return && x.GUID == label.GUID)].GUID = item.GUID;
 			}
 		}
 	}

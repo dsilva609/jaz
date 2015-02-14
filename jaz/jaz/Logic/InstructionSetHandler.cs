@@ -242,7 +242,7 @@ namespace jaz.Logic
 				start = this._instructionsToBeExecuted.FindIndex(x => x.Value == nextInstruction && x.Command == InstructionSet.Call) + 1;
 			else
 				start = this._instructionsToBeExecuted.FindIndex(x => x.Value == nextInstruction && x.Command == InstructionSet.Label) + 1;
-			int end = this._instructionsToBeExecuted.Count;//make sure this number is not off by 1
+			int end = this._instructionsToBeExecuted.Count - 1;//make sure this number is not off by 1
 			List<Instruction> instructions = this._instructionsToBeExecuted.GetRange(start, end - start);
 
 			this.IterateThrough(instructions, true);
@@ -457,8 +457,8 @@ namespace jaz.Logic
 
 			List<Instruction> subroutine;
 			int beginning = tempInstructions.FindIndex(x => x.GUID == guid) + 1;
-			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.End && y.GUID == guid);
-			subroutine = tempInstructions.GetRange(beginning, end);
+			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.End && y.GUID == guid) - 1;
+			subroutine = tempInstructions.GetRange(beginning, end - beginning);
 
 			this._newVariablesAreLocal = true;
 
@@ -531,14 +531,14 @@ namespace jaz.Logic
 				this._currentFunctionToBePopulated.Add(instruction);
 		}
 
-		private void SearchAndPopulateFunction(string functionName, Guid functionGUID)
+		private void SearchAndPopulateFunction(string functionName, Guid functionGUID)//is the guid even used?
 		{
 			var tempInstructions = this._instructionsToBeExecuted;
 			List<Instruction> function;
-			int start = tempInstructions.FindIndex(x => x.Command == InstructionSet.Label && x.Value == functionName) + 1;
-			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.Return && y.GUID == tempInstructions[start - 1].GUID);
+			int start = tempInstructions.FindIndex(x => x.Command == InstructionSet.Label && x.Value == functionName);
+			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.Return && y.GUID == tempInstructions[start].GUID);
 
-			function = tempInstructions.GetRange(start, end - start + 1);
+			function = tempInstructions.GetRange(start, end - start);
 			this._symbolTable.Add(functionName, function);
 		}
 

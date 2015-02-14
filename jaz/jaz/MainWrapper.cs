@@ -15,15 +15,15 @@ namespace jaz
 			 *		output of executed instructions are displayed
 			 *			file or console?
 			 */
-			new Interpreter(@"Resources\factProc.jaz").Execute();//--remove parameter
+			new Interpreter(@"Resources\foo.jaz").Execute();//--remove parameter
 		}
 	}
 }
 
 /*
  * currently not working
- *	demo.jaz -- probably local vs global variable issue, last number is off by 1, also repeat print out --- works
- *	recFact.jaz -- null reference exception, now stack overflow exception
- *	foo.jaz -- local vs global variable issue ---works
- *	factProc.jaz -- DOA ---	works
+ *	demo.jaz -- probably local vs global variable issue, one value wont update locally or passed --- works?
+ *	recFact.jaz -- null reference exception, now stack overflow exception, now key not found exception
+ *	foo.jaz -- local vs global variable issue --- ?
+ *	factProc.jaz -- local vs global cariable issue --- works?
 */

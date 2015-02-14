@@ -462,7 +462,24 @@ namespace jaz.Logic
 			subroutine = tempInstructions.GetRange(beginning, end - beginning);//is this off by 1?
 
 			this._newVariablesAreLocal = true;
-
+			Instruction previousInstr = new Instruction();
+			subroutine.ForEach(x =>
+			{
+				string origValue = x.Value;
+				//x.Value = (x.Command == InstructionSet.RValue) ? "local::" + x.Value : x.Value = x.Value;
+				//if (x.Command == InstructionSet.LValue && !this._symbolTable.ContainsKey("passed::" + origValue))
+				//this._symbolTable.Add("passed::" + origValue, 0);
+				if (x.Command == InstructionSet.RValue && previousInstr.Command == InstructionSet.LValue && !this._symbolTable.ContainsKey("passed::" + previousInstr.Value) && this._symbolTable.ContainsKey(origValue))
+					this._symbolTable.Add("passed::" + previousInstr.Value, this._symbolTable[origValue]);
+				//					this._symbolTable["passed::" + origValue] = this._symbolTable[origValue];//origvalue does not exist yet
+				//else if (x.Command == InstructionSet.RValue && previousInstr.Command == InstructionSet.LValue && !this._symbolTable.ContainsKey("passed::" + previousInstr.Value))
+				//this._symbolTable[previousInstr.Value] = this._symbolTable[origValue];
+				//	this._symbolTable.Add("passed::" + previousInstr.Value, 0);
+				//string value = x.Value;
+				//if (!string.IsNullOrWhiteSpace(value) && value.Contains("local::"))
+				//	this._symbolTable.Add(value, 0);
+				previousInstr = x;
+			});
 			this.IterateThrough(subroutine, this._newVariablesAreLocal);
 			//for (int i = tempInstructions.FindIndex(x => x.GUID == guid); i < tempInstructions.Count; i++)
 			///	{
@@ -540,7 +557,22 @@ namespace jaz.Logic
 			int start = tempInstructions.FindIndex(x => x.Command == InstructionSet.Label && x.Value == functionName) + 1;
 			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.Return && y.GUID == tempInstructions[start - 1].GUID);
 
+			Instruction previousInstr = new Instruction();
 			function = tempInstructions.GetRange(start, end - start + 1);
+			function.ForEach(x =>
+			{
+				string origValue = x.Value;
+				string currentCmd = x.Command;
+				//x.Value = (x.Command == InstructionSet.LValue) ? "local::" + x.Value : x.Value;// = x.Value;
+				//x.Value = x.Command == InstructionSet.RValue ? "passed::" + x.Value : x.Value;
+				string value = x.Value;
+
+				if (x.Command == InstructionSet.RValue && previousInstr.Command == InstructionSet.LValue && !this._symbolTable.ContainsKey("local::" + origValue))//local value needs to be set to the passed balue
+				{
+					this._symbolTable.Add("local::" + origValue, this._symbolTable["passed::" + origValue]);
+				}
+				previousInstr = x;
+			});
 			this._symbolTable.Add(functionName, function);
 		}
 

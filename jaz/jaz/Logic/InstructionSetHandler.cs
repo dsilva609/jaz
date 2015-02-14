@@ -9,6 +9,8 @@ namespace jaz.Logic
 	{
 		private Stack _operationStack;
 		private Dictionary<string, object> _symbolTable;
+		private bool _populatingFunction = false;
+		private Queue<Instruction> _currentFunctionToBePopulated;
 
 		public InstructionSetHandler()
 		{
@@ -20,7 +22,10 @@ namespace jaz.Logic
 		{
 			foreach (var item in instructions)
 			{
-				this.DetermineAndExecuteInstructionOperation(item);
+				if (!this._populatingFunction)
+					this.DetermineAndExecuteInstructionOperation(item);
+				else
+					this.PopulateFunction(item);
 			}
 		}
 
@@ -88,7 +93,7 @@ namespace jaz.Logic
 					break;
 
 				case InstructionSet.Label:
-					this.Label();
+					this.Label(item.Value);
 					break;
 
 				case InstructionSet.Lesser:
@@ -200,8 +205,15 @@ namespace jaz.Logic
 
 		#region Control Flow
 
-		private void Label() //--need to figure out way to save methods, list of queues?
-		{ throw new NotImplementedException(); }
+		private void Label(string functionName) //--need to figure out way to save methods, list of queues in the dictionary?
+		{
+			this._operationStack.Push(functionName);
+			this._symbolTable.Add(functionName, new Queue<Instruction>());
+
+			this._currentFunctionToBePopulated = (Queue<Instruction>)this._symbolTable[this._operationStack.Peek().ToString()];
+
+			this._populatingFunction = true;
+		}
 
 		private void GoTo()
 		{ throw new NotImplementedException(); }
@@ -408,5 +420,22 @@ namespace jaz.Logic
 		{ throw new NotImplementedException(); }
 
 		#endregion Subprogram Control
+
+		#region Helpers
+
+		private void PopulateFunction(Instruction instruction)
+		{
+			if (instruction.Value == InstructionSet.Return)
+			{
+				this._currentFunctionToBePopulated.Enqueue(instruction);
+				this._symbolTable[this._operationStack.Peek().ToString()] = this._currentFunctionToBePopulated;
+				this._currentFunctionToBePopulated.Clear();
+				this._populatingFunction = false;
+			}
+			else
+				this._currentFunctionToBePopulated.Enqueue(instruction);
+		}
+
+		#endregion Helpers
 	}
 }

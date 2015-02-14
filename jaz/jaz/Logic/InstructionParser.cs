@@ -35,12 +35,12 @@ namespace jaz.Logic
 				{
 					instruction.Command = temp.Substring(0, temp.IndexOf(" "));
 					instruction.Value = temp.Substring(temp.IndexOf(" ") + 1);
-					Console.WriteLine(temp.Substring(0, temp.IndexOf(" ")));
+					//Console.WriteLine(temp.Substring(0, temp.IndexOf(" ")));
 				}
 				else
 				{
 					instruction.Command = temp;
-					Console.WriteLine(temp);
+					//Console.WriteLine(temp);
 				}
 				this._instructionList.Add(instruction);
 

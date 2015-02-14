@@ -67,15 +67,15 @@ namespace jaz.Logic
 					break;
 
 				case InstructionSet.GoFalse:
-					this.GoFalse();
+					this.GoFalse(item.Value);
 					break;
 
 				case InstructionSet.GoTo:
-					this.GoTo();
+					this.GoTo(item.Value);
 					break;
 
 				case InstructionSet.GoTrue:
-					this.GoTrue();
+					this.GoTrue(item.Value);
 					break;
 
 				case InstructionSet.Greater:
@@ -139,7 +139,7 @@ namespace jaz.Logic
 					break;
 
 				case InstructionSet.Return:
-					this.Return();
+					this.Return(item.GUID);
 					break;
 
 				case InstructionSet.RValue:
@@ -191,7 +191,8 @@ namespace jaz.Logic
 		private void LValue(string address)
 		{
 			this._operationStack.Push(address);
-			this._symbolTable.Add(address, null);
+			if (!this._symbolTable.ContainsKey(address))
+				this._symbolTable.Add(address, null);
 		}
 
 		private void Pop()
@@ -220,8 +221,9 @@ namespace jaz.Logic
 
 		private void Label(string functionName) //--there are labels coupled to function calls and labels that are just pointers
 		{
-			this._operationStack.Push(functionName);
-			this._symbolTable.Add(functionName, new List<Instruction>());//is this needed or can it be combined below?
+			//this._operationStack.Push(functionName);//is this necessary?
+			if (!this._symbolTable.ContainsKey(functionName)) //what do if this already exists?
+				this._symbolTable.Add(functionName, new List<Instruction>());//is this needed or can it be combined below?
 
 			var coupledReturnValue = this._instructionsToBeExecuted.Find(x => x.Value == functionName && x.Command == InstructionSet.Return);
 
@@ -233,14 +235,38 @@ namespace jaz.Logic
 			}
 		}
 
-		private void GoTo()
-		{ throw new NotImplementedException(); }
+		private void GoTo(string nextInstruction, bool fromReturn = false)//guid or just label?
+		{
+			int start = 0;
+			if (fromReturn)
+				start = this._instructionsToBeExecuted.FindIndex(x => x.Value == nextInstruction && x.Command == InstructionSet.Call) + 1;
+			else
+				start = this._instructionsToBeExecuted.FindIndex(x => x.Value == nextInstruction && x.Command == InstructionSet.Label) + 1;
+			int end = this._instructionsToBeExecuted.Count;//make sure this number is not off by 1
+			List<Instruction> instructions = this._instructionsToBeExecuted.GetRange(start, end - start);
 
-		private void GoFalse()
-		{ throw new NotImplementedException(); }
+			this.IterateThrough(instructions, true);
+		}
 
-		private void GoTrue()
-		{ throw new NotImplementedException(); }
+		private void GoFalse(string nextInstruction)//guid or just label?
+		{
+			int stackTop = Convert.ToInt32(this._operationStack.Pop());
+
+			if (stackTop == 0)
+				this.GoTo(nextInstruction, false);
+
+			//throw new NotImplementedException();
+		}
+
+		private void GoTrue(string nextInstruction)//guid or just label?
+		{
+			int stackTop = Convert.ToInt32(this._operationStack.Pop());
+
+			if (stackTop != 0)
+				this.GoTo(nextInstruction);
+
+			//throw new NotImplementedException();
+		}
 
 		private void Halt()
 		{
@@ -448,10 +474,12 @@ namespace jaz.Logic
 			this._newVariablesAreLocal = false;
 		}
 
-		private void Return()//guid for next instruction to return to
+		private void Return(Guid returnToInstruction)//use guid to return to call index + 1
 		{
 			//need to make sure that it goes back to the correct instruction
-			this._operationStack.Pop();
+			//this._operationStack.Pop();
+			string returnValue = this._instructionsToBeExecuted.Find(x => x.GUID == returnToInstruction && x.Command == InstructionSet.Call).Value;
+			this.GoTo(returnValue, true);
 		}
 
 		private void Call(string functionName, Guid functionGUID)
@@ -481,6 +509,8 @@ namespace jaz.Logic
 		{
 			foreach (var item in instructions)
 			{
+				var test = item.Command;//for testing
+				var test2 = item.Value;
 				if (!this._populatingFunction)
 					this.ExecuteInstruction(item);
 				else

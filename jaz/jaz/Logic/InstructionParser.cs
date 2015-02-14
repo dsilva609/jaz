@@ -24,7 +24,7 @@ namespace jaz.Logic
 			Guid currentBeginGUID = new Guid();
 			//Guid currentFunctionGUID = new Guid();
 			Guid currentCoupledGUID = new Guid();
-			bool callAndLabelAreCoupled = false;
+			bool callAndLabelAreCoupled = false;//is this needed?
 			string currentCallName = string.Empty;
 
 			//	Guid guid;

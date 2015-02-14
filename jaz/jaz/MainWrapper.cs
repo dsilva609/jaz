@@ -15,7 +15,7 @@ namespace jaz
 			 *		output of executed instructions are displayed
 			 *			file or console?
 			 */
-			new Interpreter(@"Resources\demo.jaz").Execute();//--remove parameter
+			new Interpreter(@"Resources\recFact.jaz").Execute();//--remove parameter
 		}
 	}
 }
@@ -23,7 +23,7 @@ namespace jaz
 /*
  * currently not working
  *	demo.jaz -- probably local vs global variable issue, last number is off by 1, also repeat print out
- *	recFact.jaz -- null reference exception
+ *	recFact.jaz -- null reference exception, now stack overflow exception
  *	foo.jaz -- local vs global variable issue
  *	factProc.jaz -- DOA
 */

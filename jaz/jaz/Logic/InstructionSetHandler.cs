@@ -244,7 +244,7 @@ namespace jaz.Logic
 			else
 				start = this._instructionsToBeExecuted.FindIndex(x => x.Value == nextInstruction && x.Command == InstructionSet.Label) + 1;
 			int end = this._instructionsToBeExecuted.Count - 1;//make sure this number is not off by 1
-			List<Instruction> instructions = this._instructionsToBeExecuted.GetRange(start, end - start);
+			List<Instruction> instructions = this._instructionsToBeExecuted.GetRange(start, end - start + 1);
 
 			this.IterateThrough(instructions, true);
 		}

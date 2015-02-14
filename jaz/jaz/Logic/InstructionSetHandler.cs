@@ -12,6 +12,7 @@ namespace jaz.Logic
 		private List<Instruction> _instructionsToBeExecuted;
 		private bool _populatingFunction = false;
 		private List<Instruction> _currentFunctionToBePopulated;
+		private bool _newVariablesAreLocal = false;
 
 		public InstructionSetHandler()
 		{
@@ -42,11 +43,11 @@ namespace jaz.Logic
 					break;
 
 				case InstructionSet.Begin:
-					this.Begin();
+					this.Begin(item.GUID);
 					break;
 
 				case InstructionSet.Call:
-					this.Call(item.Value);
+					this.Call(item.Value, item.GUID);
 					break;
 
 				case InstructionSet.Copy:
@@ -175,9 +176,15 @@ namespace jaz.Logic
 		private void RValue(object value)
 		{
 			//value = 0;
-			this._operationStack.Push(0);//make sure these values are correct
-			this._symbolTable.Add(value.ToString(), 0);//or should this be null?
-
+			if (this._symbolTable.ContainsKey(value.ToString()))
+			{
+				this._operationStack.Push(this._symbolTable[value.ToString()]);
+			}
+			else
+			{
+				this._operationStack.Push(0);//make sure these values are correct
+				this._symbolTable.Add(value.ToString(), 0);//or should this be null?
+			}
 			//this._symbolTable[value.Command] = value.Value;//probably not correct for now
 		}
 
@@ -203,20 +210,27 @@ namespace jaz.Logic
 		}
 
 		private void Copy()
-		{ throw new NotImplementedException(); }
+		{
+			this._operationStack.Push(this._operationStack.Peek());
+		}
 
 		#endregion Stack Manipulation
 
 		#region Control Flow
 
-		private void Label(string functionName) //--need to figure out way to save methods, list of queues in the dictionary?
+		private void Label(string functionName) //--there are labels coupled to function calls and labels that are just pointers
 		{
 			this._operationStack.Push(functionName);
-			this._symbolTable.Add(functionName, new Queue<Instruction>());
+			this._symbolTable.Add(functionName, new List<Instruction>());//is this needed or can it be combined below?
 
-			this._currentFunctionToBePopulated = (List<Instruction>)this._symbolTable[this._operationStack.Peek().ToString()];
+			var coupledReturnValue = this._instructionsToBeExecuted.Find(x => x.Value == functionName && x.Command == InstructionSet.Return);
 
-			this._populatingFunction = true;
+			if (coupledReturnValue != null)
+			{
+				this._currentFunctionToBePopulated = (List<Instruction>)this._symbolTable[this._operationStack.Peek().ToString()];//only if there is a coupled return of same guid
+
+				this._populatingFunction = true;
+			}
 		}
 
 		private void GoTo()
@@ -411,23 +425,45 @@ namespace jaz.Logic
 
 		#region Subprogram Control
 
-		private void Begin() //--run through a queue?
-		{ throw new NotImplementedException(); }
+		private void Begin(Guid guid) //--needs to handle multiple begin and end blocks
+		{
+			var tempInstructions = this._instructionsToBeExecuted;
+
+			List<Instruction> subroutine;
+			int beginning = tempInstructions.FindIndex(x => x.GUID == guid) + 1;
+			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.End && y.GUID == guid);
+			subroutine = tempInstructions.GetRange(beginning, end);
+
+			this._newVariablesAreLocal = true;
+
+			this.IterateThrough(subroutine, this._newVariablesAreLocal);
+			//for (int i = tempInstructions.FindIndex(x => x.GUID == guid); i < tempInstructions.Count; i++)
+			///	{
+			//		if (tempInstructions.Find(x => x.))
+			//	}
+		}
 
 		private void End()
-		{ throw new NotImplementedException(); }
-
-		private void Return()
-		{ throw new NotImplementedException(); }
-
-		private void Call(string functionName)
 		{
+			this._newVariablesAreLocal = false;
+		}
+
+		private void Return()//guid for next instruction to return to
+		{
+			//need to make sure that it goes back to the correct instruction
+			this._operationStack.Pop();
+		}
+
+		private void Call(string functionName, Guid functionGUID)
+		{
+			this._operationStack.Push(this._instructionsToBeExecuted[this._instructionsToBeExecuted.FindIndex(x => x.GUID == functionGUID) + 1].GUID);
+
 			if (!this._symbolTable.ContainsKey(functionName))
 			{
-				this.SearchAndPopulateFunction(functionName);
+				this.SearchAndPopulateFunction(functionName, functionGUID);
 			}
-			else
-				this.IterateThrough((List<Instruction>)this._symbolTable[functionName], true);
+			//else
+			this.IterateThrough((List<Instruction>)this._symbolTable[functionName], true);
 
 			/*
 			 * else
@@ -465,12 +501,14 @@ namespace jaz.Logic
 				this._currentFunctionToBePopulated.Add(instruction);
 		}
 
-		private void SearchAndPopulateFunction(string functionName)
+		private void SearchAndPopulateFunction(string functionName, Guid functionGUID)
 		{
 			var tempInstructions = this._instructionsToBeExecuted;
 			List<Instruction> function;
+			int start = tempInstructions.FindIndex(x => x.Command == InstructionSet.Label && x.Value == functionName) + 1;
+			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.Return && y.GUID == tempInstructions[start - 1].GUID);
 
-			function = tempInstructions.GetRange(tempInstructions.FindIndex(x => x.Value == functionName), tempInstructions.FindIndex(y => y.Command == InstructionSet.Return));
+			function = tempInstructions.GetRange(start, end - start + 1);
 			this._symbolTable.Add(functionName, function);
 		}
 

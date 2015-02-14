@@ -16,6 +16,8 @@ namespace jaz.Logic
 		public List<Instruction> Execute(ref string[] data)
 		{
 			this.Parse(ref data);
+			this.AssociateCoupling();
+
 			return this._instructionList;
 		}
 
@@ -87,8 +89,9 @@ namespace jaz.Logic
 			foreach (var item in calls)
 			{
 				Instruction label = this._instructionList.Find(x => x.Command == InstructionSet.Label && x.Value == item.Value);
+				Guid tempGuid = label.GUID;
 				this._instructionList[this._instructionList.IndexOf(label)].GUID = item.GUID;
-				this._instructionList[this._instructionList.FindIndex(x => x.Command == InstructionSet.Return && x.GUID == label.GUID)].GUID = item.GUID;
+				this._instructionList[this._instructionList.FindIndex(x => x.Command == InstructionSet.Return && x.GUID == tempGuid)].GUID = item.GUID;
 			}
 		}
 	}

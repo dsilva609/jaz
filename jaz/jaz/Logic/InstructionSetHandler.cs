@@ -235,11 +235,12 @@ namespace jaz.Logic
 			}
 		}
 
-		private void GoTo(string nextInstruction, bool fromReturn = false)//guid or just label?
+		private void GoTo(string nextInstruction, bool fromReturn = false, Guid returnGUID = new Guid())//guid or just label?
 		{
 			int start = 0;
 			if (fromReturn)
-				start = this._instructionsToBeExecuted.FindIndex(x => x.Value == nextInstruction && x.Command == InstructionSet.Call) + 1;
+				//start = this._instructionsToBeExecuted.FindIndex(x => x.Value == nextInstruction && x.Command == InstructionSet.Call) + 1;
+				start = this._instructionsToBeExecuted.FindIndex(x => x.GUID == returnGUID && x.Command == nextInstruction);
 			else
 				start = this._instructionsToBeExecuted.FindIndex(x => x.Value == nextInstruction && x.Command == InstructionSet.Label) + 1;
 			int end = this._instructionsToBeExecuted.Count - 1;//make sure this number is not off by 1
@@ -457,8 +458,8 @@ namespace jaz.Logic
 
 			List<Instruction> subroutine;
 			int beginning = tempInstructions.FindIndex(x => x.GUID == guid) + 1;
-			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.End && y.GUID == guid) - 1;
-			subroutine = tempInstructions.GetRange(beginning, end - beginning);
+			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.End && y.GUID == guid) + 1;
+			subroutine = tempInstructions.GetRange(beginning, end - beginning);//is this off by 1?
 
 			this._newVariablesAreLocal = true;
 
@@ -478,8 +479,9 @@ namespace jaz.Logic
 		{
 			//need to make sure that it goes back to the correct instruction
 			//this._operationStack.Pop();
-			string returnValue = this._instructionsToBeExecuted.Find(x => x.GUID == returnToInstruction && x.Command == InstructionSet.Call).Value;
-			this.GoTo(returnValue, true);
+			int returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == returnToInstruction) + 1;
+			Instruction returnValue = this._instructionsToBeExecuted[returnIndex];//currently returns null
+			this.GoTo(returnValue.Command, true, returnValue.GUID);
 		}
 
 		private void Call(string functionName, Guid functionGUID)
@@ -535,10 +537,10 @@ namespace jaz.Logic
 		{
 			var tempInstructions = this._instructionsToBeExecuted;
 			List<Instruction> function;
-			int start = tempInstructions.FindIndex(x => x.Command == InstructionSet.Label && x.Value == functionName);
-			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.Return && y.GUID == tempInstructions[start].GUID);
+			int start = tempInstructions.FindIndex(x => x.Command == InstructionSet.Label && x.Value == functionName) + 1;
+			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.Return && y.GUID == tempInstructions[start - 1].GUID);
 
-			function = tempInstructions.GetRange(start, end - start);
+			function = tempInstructions.GetRange(start, end - start + 1);
 			this._symbolTable.Add(functionName, function);
 		}
 

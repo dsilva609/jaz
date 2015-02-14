@@ -15,7 +15,14 @@ namespace jaz
 			 *		output of executed instructions are displayed
 			 *			file or console?
 			 */
-			new Interpreter(@"Resources\demo.jaz").Execute();//--remove parameter
+			new Interpreter(@"Resources\foo.jaz").Execute();//--remove parameter
 		}
 	}
 }
+
+/*
+ * currently not working
+ *	demo.jaz -- probably local vs global variable issue, last number is off by 1
+ *	recFact.jaz -- null reference exception
+ *	foo.jaz -- local vs global variable issue
+*/

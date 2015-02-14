@@ -9,8 +9,9 @@ namespace jaz.Logic
 	{
 		private Stack _operationStack;
 		private Dictionary<string, object> _symbolTable;
+		private List<Instruction> _instructionsToBeExecuted;
 		private bool _populatingFunction = false;
-		private Queue<Instruction> _currentFunctionToBePopulated;
+		private List<Instruction> _currentFunctionToBePopulated;
 
 		public InstructionSetHandler()
 		{
@@ -20,16 +21,12 @@ namespace jaz.Logic
 
 		public void Run(List<Instruction> instructions)
 		{
-			foreach (var item in instructions)
-			{
-				if (!this._populatingFunction)
-					this.DetermineAndExecuteInstructionOperation(item);
-				else
-					this.PopulateFunction(item);
-			}
+			this._instructionsToBeExecuted = instructions;
+
+			this.IterateThrough(this._instructionsToBeExecuted, false);
 		}
 
-		private void DetermineAndExecuteInstructionOperation(Instruction item)
+		private void ExecuteInstruction(Instruction item)
 		{
 			switch (item.Command)
 			{
@@ -49,7 +46,7 @@ namespace jaz.Logic
 					break;
 
 				case InstructionSet.Call:
-					this.Call();
+					this.Call(item.Value);
 					break;
 
 				case InstructionSet.Copy:
@@ -196,7 +193,14 @@ namespace jaz.Logic
 		}
 
 		private void ReplaceTop()
-		{ throw new NotImplementedException(); }
+		{
+			var value = this._operationStack.Pop();
+			var variable = this._operationStack.Pop();
+
+			this._symbolTable[variable.ToString()] = value;
+
+			this._operationStack.Push(value);
+		}
 
 		private void Copy()
 		{ throw new NotImplementedException(); }
@@ -210,7 +214,7 @@ namespace jaz.Logic
 			this._operationStack.Push(functionName);
 			this._symbolTable.Add(functionName, new Queue<Instruction>());
 
-			this._currentFunctionToBePopulated = (Queue<Instruction>)this._symbolTable[this._operationStack.Peek().ToString()];
+			this._currentFunctionToBePopulated = (List<Instruction>)this._symbolTable[this._operationStack.Peek().ToString()];
 
 			this._populatingFunction = true;
 		}
@@ -416,24 +420,58 @@ namespace jaz.Logic
 		private void Return()
 		{ throw new NotImplementedException(); }
 
-		private void Call()
-		{ throw new NotImplementedException(); }
+		private void Call(string functionName)
+		{
+			if (!this._symbolTable.ContainsKey(functionName))
+			{
+				this.SearchAndPopulateFunction(functionName);
+			}
+			else
+				this.IterateThrough((List<Instruction>)this._symbolTable[functionName], true);
+
+			/*
+			 * else
+			 *		save all instructions until label functionName is found?
+			 *		then populate function name
+			 *		then execute function functionName
+			 */
+		}
 
 		#endregion Subprogram Control
 
 		#region Helpers
 
+		private void IterateThrough(List<Instruction> instructions, bool newVariablesAreLocal)
+		{
+			foreach (var item in instructions)
+			{
+				if (!this._populatingFunction)
+					this.ExecuteInstruction(item);
+				else
+					this.PopulateFunction(item);
+			}
+		}
+
 		private void PopulateFunction(Instruction instruction)
 		{
 			if (instruction.Value == InstructionSet.Return)
 			{
-				this._currentFunctionToBePopulated.Enqueue(instruction);
+				this._currentFunctionToBePopulated.Add(instruction);
 				this._symbolTable[this._operationStack.Peek().ToString()] = this._currentFunctionToBePopulated;
 				this._currentFunctionToBePopulated.Clear();
 				this._populatingFunction = false;
 			}
 			else
-				this._currentFunctionToBePopulated.Enqueue(instruction);
+				this._currentFunctionToBePopulated.Add(instruction);
+		}
+
+		private void SearchAndPopulateFunction(string functionName)
+		{
+			var tempInstructions = this._instructionsToBeExecuted;
+			List<Instruction> function;
+
+			function = tempInstructions.GetRange(tempInstructions.FindIndex(x => x.Value == functionName), tempInstructions.FindIndex(y => y.Command == InstructionSet.Return));
+			this._symbolTable.Add(functionName, function);
 		}
 
 		#endregion Helpers

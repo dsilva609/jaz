@@ -465,38 +465,28 @@ namespace jaz.Logic
 
 			this._newVariablesAreLocal = true;
 			Instruction previousInstr = new Instruction();
-			subroutine.ForEach(x =>
-			{
-				string origValue = x.Value;
+			//subroutine.ForEach(x =>
+			//{
+			//	string origValue = x.Value;
 
-				if (x.Command == InstructionSet.RValue && previousInstr.Command == InstructionSet.LValue && !this._symbolTable.ContainsKey("passed::" + previousInstr.Value) && this._symbolTable.ContainsKey(origValue))
-				{
-					this._symbolTable.Add("passed::" + previousInstr.Value, this._symbolTable[origValue]);
+			//	if (x.Command == InstructionSet.RValue && previousInstr.Command == InstructionSet.LValue && !this._symbolTable.ContainsKey("passed::" + previousInstr.Value) && this._symbolTable.ContainsKey(origValue))
+			//	{
+			//		this._symbolTable.Add("passed::" + previousInstr.Value, this._symbolTable[origValue]);
 
-					//x.Value = "local::" + x.Value;
-					this._symbolTable.Add("local::" + previousInstr.Value, 0);
-					//x.Value = "local::" + x.Value;
-				}
-
-				if (x.Command == InstructionSet.RValue && this._symbolTable.ContainsKey("passed::" + previousInstr.Value) && !this._symbolTable.ContainsKey("local::" + previousInstr.Value)) //is there is a passed value then a local variable of that name and value of 0 needs to be added to dictionary
-				{
-					this._symbolTable.Add("local::" + previousInstr.Value, 0);
-					x.Value = "local::" + x.Value;
-				}
-				//					this._symbolTable["passed::" + origValue] = this._symbolTable[origValue];//origvalue does not exist yet
-				//else if (x.Command == InstructionSet.RValue && previousInstr.Command == InstructionSet.LValue && !this._symbolTable.ContainsKey("passed::" + previousInstr.Value))
-				//this._symbolTable[previousInstr.Value] = this._symbolTable[origValue];
-				//	this._symbolTable.Add("passed::" + previousInstr.Value, 0);
-				//string value = x.Value;
-				//if (!string.IsNullOrWhiteSpace(value) && value.Contains("local::"))
-				//	this._symbolTable.Add(value, 0);
-				previousInstr = x;
-			});
-			this.IterateThrough(subroutine, this._newVariablesAreLocal);
-			//for (int i = tempInstructions.FindIndex(x => x.GUID == guid); i < tempInstructions.Count; i++)
-			///	{
-			//		if (tempInstructions.Find(x => x.))
+			//		//x.Value = "local::" + x.Value;
+			//		this._symbolTable.Add("local::" + previousInstr.Value, 0);
+			//		//x.Value = "local::" + x.Value;
 			//	}
+
+			//	if (x.Command == InstructionSet.RValue && this._symbolTable.ContainsKey("passed::" + previousInstr.Value) && !this._symbolTable.ContainsKey("local::" + previousInstr.Value)) //is there is a passed value then a local variable of that name and value of 0 needs to be added to dictionary
+			//	{
+			//		this._symbolTable.Add("local::" + previousInstr.Value, 0);
+			//		x.Value = "local::" + x.Value;
+			//	}
+
+			//	previousInstr = x;
+			//});
+			this.IterateThrough(subroutine, this._newVariablesAreLocal);
 		}
 
 		private void End()
@@ -618,7 +608,7 @@ namespace jaz.Logic
 				}
 				index++;
 			}
-			//this.IterateThrough(mainInstructions, false);
+			this.IterateThrough(mainInstructions, false);
 		}
 
 		private void IterateThrough(List<Instruction> instructions, bool newVariablesAreLocal)
@@ -656,31 +646,47 @@ namespace jaz.Logic
 
 			Instruction previousInstr = new Instruction();
 			function = tempInstructions.GetRange(start, end - start + 1);
+
+			/* if in label
+			 *	if find begin
+			 *		iterate to find call
+			 *		save call name
+			 *		lvalues in begin are callName::variableName
+			 *		rvalues in begin are labelName::variableName
+			 *	if not in begin
+			 *		lvalue is labelName::variableName
+			 *		rvalue is labelName::variableName
+			 *
+			 * have function to take in instructions and insert scope
+			 *	AssignScope(instructions, labelName = string.Empty) --optional labelName if begin/end block is within a label, otherwise this is always determining variable passing scope
+			 */
+
 			function.ForEach(x =>
-		   {
-			   string origValue = x.Value;
-			   string currentCmd = x.Command;
+			{
+				if (x.Command == InstructionSet.LValue || x.Command == InstructionSet.RValue)
+					x.Value = functionName + "::" + x.Value;
+			});
 
-			   //if (origValue == "r")
-			   //{
-			   //	Console.WriteLine("value needs to be changed to local");
-			   //	x.Value = "local::" + x.Value;
-			   //}
-			   //&& this._symbolTable.ContainsKey("passed::" + x.Value)
-			   if (x.Command == InstructionSet.RValue && !this._symbolTable.ContainsKey("local::" + x.Value))
-			   {
-				   this._symbolTable.Add("local::" + x.Value, 0);
-				   // Console.WriteLine("rvalue is: " + x.Value);
-				   x.Value = "local::" + x.Value;
-			   }
+			//-----------------------------------------------------------------------------------------------------old hacky logic
+			// function.ForEach(x =>
+			//{
+			//	string origValue = x.Value;
+			//	string currentCmd = x.Command;
 
-			   if (x.Command == InstructionSet.RValue && previousInstr.Command == InstructionSet.LValue && !this._symbolTable.ContainsKey("local::" + origValue))//local value needs to be set to the passed balue
-			   {
-				   this._symbolTable.Add("local::" + origValue, this._symbolTable["passed::" + origValue]);
-				   //x.Value = "local::" + x.Value;
-			   }
-			   previousInstr = x;
-		   });
+			//	if (x.Command == InstructionSet.RValue && !this._symbolTable.ContainsKey("local::" + x.Value))
+			//	{
+			//		this._symbolTable.Add("local::" + x.Value, 0);
+			//		// Console.WriteLine("rvalue is: " + x.Value);
+			//		x.Value = "local::" + x.Value;
+			//	}
+
+			//	if (x.Command == InstructionSet.RValue && previousInstr.Command == InstructionSet.LValue && !this._symbolTable.ContainsKey("local::" + origValue))//local value needs to be set to the passed balue
+			//	{
+			//		this._symbolTable.Add("local::" + origValue, this._symbolTable["passed::" + origValue]);
+
+			//	}
+			//	previousInstr = x;
+			//});
 			this._symbolTable.Add(functionName, function);
 		}
 

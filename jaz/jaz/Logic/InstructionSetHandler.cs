@@ -463,8 +463,10 @@ namespace jaz.Logic
 			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.End && y.GUID == guid) + 1;
 			subroutine = tempInstructions.GetRange(beginning, end - beginning);//is this off by 1?
 
-			this._newVariablesAreLocal = true;
-			Instruction previousInstr = new Instruction();
+			subroutine = AssignScope(subroutine);
+			//--------------------------------------------------------------------------------------old hacky logic
+			//	this._newVariablesAreLocal = true;
+			//	Instruction previousInstr = new Instruction();
 			//subroutine.ForEach(x =>
 			//{
 			//	string origValue = x.Value;
@@ -577,19 +579,19 @@ namespace jaz.Logic
 					isInBeginBlock = false;
 				}
 
-				if (nextInstructionFound && (instructions[index].Command == InstructionSet.LValue || instructions[index].Command == InstructionSet.RValue) && !isInBeginBlock)
-				{
-					instructions[index].Value = "main::" + instructions[index].Value;
-				}
-				else if (nextInstructionFound && instructions[index].Command == InstructionSet.LValue && isInBeginBlock)
-				{
-					instructions[index].Value = "passed::" + instructions[index].Value;
-				}
+				//if (nextInstructionFound && (instructions[index].Command == InstructionSet.LValue || instructions[index].Command == InstructionSet.RValue) && !isInBeginBlock)
+				//{
+				//	instructions[index].Value = "main::" + instructions[index].Value;
+				//}
+				//else if (nextInstructionFound && instructions[index].Command == InstructionSet.LValue && isInBeginBlock)
+				//{
+				//	instructions[index].Value = "passed::" + instructions[index].Value;
+				//}
 
-				if (nextInstructionFound && instructions[index].Command == InstructionSet.RValue && isInBeginBlock)
-				{
-					instructions[index].Value = "main::" + instructions[index].Value;
-				}
+				//if (nextInstructionFound && instructions[index].Command == InstructionSet.RValue && isInBeginBlock)
+				//{
+				//	instructions[index].Value = "main::" + instructions[index].Value;
+				//}
 
 				if (nextInstructionFound && instructions[index].Command == InstructionSet.Halt)
 				{
@@ -647,6 +649,7 @@ namespace jaz.Logic
 			Instruction previousInstr = new Instruction();
 			function = tempInstructions.GetRange(start, end - start + 1);
 
+			function = AssignScope(function, functionName);
 			/* if in label
 			 *	if find begin
 			 *		iterate to find call
@@ -660,12 +663,6 @@ namespace jaz.Logic
 			 * have function to take in instructions and insert scope
 			 *	AssignScope(instructions, labelName = string.Empty) --optional labelName if begin/end block is within a label, otherwise this is always determining variable passing scope
 			 */
-
-			function.ForEach(x =>
-			{
-				if (x.Command == InstructionSet.LValue || x.Command == InstructionSet.RValue)
-					x.Value = functionName + "::" + x.Value;
-			});
 
 			//-----------------------------------------------------------------------------------------------------old hacky logic
 			// function.ForEach(x =>
@@ -688,6 +685,83 @@ namespace jaz.Logic
 			//	previousInstr = x;
 			//});
 			this._symbolTable.Add(functionName, function);
+		}
+
+		private List<Instruction> AssignScope(List<Instruction> instructions, string labelName = "")////can labelName be optional? or should this be a in begin only bool?
+		{
+			List<Instruction> tempInstructions = new List<Instruction>();
+			string callName = string.Empty;
+			/* if in label
+			 *	if find begin
+			 *		iterate to find call
+			 *		save call name
+			 *		lvalues in begin are callName::variableName
+			 *		rvalues in begin are labelName::variableName
+			 *	if not in begin
+			 *		lvalue is labelName::variableName
+			 *		rvalue is labelName::variableName
+			 *
+			 * have function to take in instructions and insert scope
+			 *	AssignScope(instructions, labelName = string.Empty) --optional labelName if begin/end block is within a label, otherwise this is always determining variable passing scope
+			 */
+
+			foreach (var item in instructions)
+			{
+				if (item.Command == InstructionSet.Call)
+					callName = item.Value;
+			}
+
+			bool withinBegin = false;
+			foreach (var item in instructions)
+			{
+				if (item.Command == InstructionSet.Begin)
+					withinBegin = true;
+
+				if (withinBegin)
+				{
+					if (!string.IsNullOrWhiteSpace(labelName))
+					{
+						if (item.Command == InstructionSet.LValue)
+							item.Value = callName + "::" + item.Value;
+
+						if (item.Command == InstructionSet.RValue)
+							item.Value = labelName + "::" + item.Value;
+					}
+					else
+					{
+						if (item.Command == InstructionSet.LValue)
+							item.Value = callName + "::" + item.Value;
+
+						if (item.Command == InstructionSet.RValue)
+							item.Value = "::" + item.Value;
+					}
+				}
+				else
+				{
+					if ((item.Command == InstructionSet.LValue || item.Command == InstructionSet.RValue) && string.IsNullOrWhiteSpace(labelName))
+						item.Value = labelName + "::" + item.Value;
+
+					if ((item.Command == InstructionSet.LValue || item.Command == InstructionSet.RValue) && !string.IsNullOrWhiteSpace(labelName))
+						item.Value = "::" + item.Value;
+				}
+
+				if (item.Command == InstructionSet.End)
+					withinBegin = false;
+
+				tempInstructions.Add(item);
+			}
+
+			Console.WriteLine("instructions for: " + labelName);
+			//function.ForEach(x =>
+			//{
+			//	if (x.Command == InstructionSet.LValue || x.Command == InstructionSet.RValue)
+			//		x.Value = functionName + "::" + x.Value;
+			//});
+
+			foreach (var item in tempInstructions)
+				Console.WriteLine("instruction: " + item.Command + " " + item.Value);
+
+			return tempInstructions;
 		}
 
 		#endregion Helpers

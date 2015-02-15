@@ -26,7 +26,7 @@ namespace jaz.Logic
 
 			this.SetInitialRun(this._instructionsToBeExecuted);//////////
 
-			this.IterateThrough(this._instructionsToBeExecuted, false);
+			//	this.IterateThrough(this._instructionsToBeExecuted, false);
 		}
 
 		private void ExecuteInstruction(Instruction item)
@@ -538,39 +538,87 @@ namespace jaz.Logic
 
 		private void SetInitialRun(List<Instruction> instructions)
 		{
-			bool skipSqequence = false;
-			//bool nextRValueIsCoupled = false;
-			int lValuesCoupled = 0;
-			//List<Instruction> tempList = instructions;
+			List<Instruction> mainInstructions = new List<Instruction>();
+			bool nextInstructionFound = true;
+			bool mainIsPopulated = false;
+			int index = 0;
+			string currentSearchTerm = string.Empty;
+			int returnIndex = 0;
+			bool labelReturnFound = true;
+			bool isInBeginBlock = false;
 
-			for (int i = 0; i < instructions.Count; i++)
+			while (!mainIsPopulated)
 			{
-				if (!skipSqequence && instructions[i].Command == InstructionSet.LValue)
-					lValuesCoupled++;
-				if (!skipSqequence && (instructions[i].Command == InstructionSet.RValue && lValuesCoupled > 0))
-				{
-					//Instruction temp = new Instruction();
+				//Console.WriteLine(instructions[index].Command);
 
-					lValuesCoupled--;
-					continue;
-				}
-				if (!skipSqequence && (instructions[i].Command == InstructionSet.RValue))
-					instructions[i].Value = "local::" + instructions[i].Value;
-				if (instructions[i].Command == InstructionSet.End)
+				if (instructions[index].Command == InstructionSet.GoTo)
 				{
-					skipSqequence = false;
-					continue;
+					nextInstructionFound = false;
+					mainInstructions.Add(instructions[index]);
+					currentSearchTerm = instructions[index].Value;
+					returnIndex = index + 1;
+					Console.WriteLine("found go to");
 				}
-				if (instructions[i].Command == InstructionSet.Begin)
+
+				if (!nextInstructionFound && (instructions[index].Command == InstructionSet.Label && instructions[index].Value == currentSearchTerm))
 				{
-					skipSqequence = true;
+					nextInstructionFound = true;
+					labelReturnFound = false;
+					//	mainInstructions.Add(instructions[index]);
+					Console.WriteLine("found go to label");
+				}
+
+				if (nextInstructionFound && instructions[index].Command == InstructionSet.Return && !labelReturnFound)
+				{
+					labelReturnFound = true;
+					mainInstructions.Add(instructions[index]);
+					index = returnIndex;
+					Console.WriteLine("found label return");
 					continue;
 				}
-				if (instructions[i].Command == InstructionSet.Halt)
-					break;
+
+				if (nextInstructionFound && instructions[index].Command == InstructionSet.Begin)
+				{
+					isInBeginBlock = true;
+				}
+
+				if (nextInstructionFound && instructions[index].Command == InstructionSet.End)
+				{
+					isInBeginBlock = false;
+				}
+
+				if (nextInstructionFound && (instructions[index].Command == InstructionSet.LValue || instructions[index].Command == InstructionSet.RValue) && !isInBeginBlock)
+				{
+					instructions[index].Value = "main::" + instructions[index].Value;
+				}
+				else if (nextInstructionFound && instructions[index].Command == InstructionSet.LValue && isInBeginBlock)
+				{
+					instructions[index].Value = "passed::" + instructions[index].Value;
+				}
+
+				if (nextInstructionFound && instructions[index].Command == InstructionSet.RValue && isInBeginBlock)
+				{
+					instructions[index].Value = "main::" + instructions[index].Value;
+				}
+
+				if (nextInstructionFound && instructions[index].Command == InstructionSet.Halt)
+				{
+					//	mainInstructions.Add(instructions[index]);
+					mainIsPopulated = true;
+					//nextInstructionFound = true;
+					Console.WriteLine("main is populated");
+				}
+
+				if (nextInstructionFound)
+				{
+					mainInstructions.Add(instructions[index]);
+					Console.WriteLine("added: " + instructions[index].Command + " " + instructions[index].Value);
+					//index++;
+					//continue;
+				}
+				index++;
 			}
-
-			this._instructionsToBeExecuted = instructions;
+			//this.IterateThrough(mainInstructions, false);
 		}
 
 		private void IterateThrough(List<Instruction> instructions, bool newVariablesAreLocal)

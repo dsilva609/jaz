@@ -539,21 +539,22 @@ namespace jaz.Logic
 		private void SetInitialRun(List<Instruction> instructions)
 		{
 			bool skipSqequence = false;
-			bool nextRValueIsCoupled = false;
+			//bool nextRValueIsCoupled = false;
+			int lValuesCoupled = 0;
 			//List<Instruction> tempList = instructions;
 
 			for (int i = 0; i < instructions.Count; i++)
 			{
 				if (!skipSqequence && instructions[i].Command == InstructionSet.LValue)
-					nextRValueIsCoupled = true;
-				if (!skipSqequence && (instructions[i].Command == InstructionSet.RValue && nextRValueIsCoupled))
+					lValuesCoupled++;
+				if (!skipSqequence && (instructions[i].Command == InstructionSet.RValue && lValuesCoupled > 0))
 				{
 					//Instruction temp = new Instruction();
 
-					nextRValueIsCoupled = false;
+					lValuesCoupled--;
 					continue;
 				}
-				if (!skipSqequence && (instructions[i].Command == InstructionSet.RValue && !nextRValueIsCoupled))
+				if (!skipSqequence && (instructions[i].Command == InstructionSet.RValue))
 					instructions[i].Value = "local::" + instructions[i].Value;
 				if (instructions[i].Command == InstructionSet.End)
 				{

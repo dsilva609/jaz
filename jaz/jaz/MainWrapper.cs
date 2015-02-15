@@ -15,7 +15,7 @@ namespace jaz
 			 *		output of executed instructions are displayed
 			 *			file or console?
 			 */
-			new Interpreter(@"Resources\demo.jaz").Execute();//--remove parameter
+			new Interpreter(@"Resources\guesstheanswer.jaz").Execute();//--remove parameter
 		}
 	}
 }
@@ -26,4 +26,6 @@ namespace jaz
  *	recFact.jaz -- null reference exception, now stack overflow exception, now key not found exception
  *	foo.jaz -- local vs global variable issue --- ?
  *	factProc.jaz -- local vs global cariable issue --- works?
+ *
+ *  guessTheAnswer.jaz -- same key already added issue
 */

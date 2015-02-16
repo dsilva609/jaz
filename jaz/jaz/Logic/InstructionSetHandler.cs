@@ -542,10 +542,17 @@ namespace jaz.Logic
 			bool nextInstructionFound = true;
 			bool mainIsPopulated = false;
 			int index = 0;
+			Queue<string> searchTerms = new Queue<string>();
+			Queue<int> returnIndices = new Queue<int>();
 			string currentSearchTerm = string.Empty;
-			int returnIndex = 0;
-			bool labelReturnFound = true;
+			//int returnIndex = 0;
+			//bool labelReturnFound = true;
+			int returnLabelsNotFound = 0;
 			bool isInBeginBlock = false;
+			bool labelHasEnded = false;
+
+			//if (searchTerms.Count > 0)
+			//	currentSearchTerm = searchTerms.Dequeue();
 
 			while (!mainIsPopulated && index < instructions.Count)
 			{
@@ -555,27 +562,37 @@ namespace jaz.Logic
 				{
 					nextInstructionFound = false;
 					mainInstructions.Add(instructions[index]);
-					currentSearchTerm = instructions[index].Value;
+					searchTerms.Enqueue(instructions[index].Value);
+					currentSearchTerm = searchTerms.Dequeue();
 					//if (index + 1 <= instructions.Count - 1)
-					returnIndex = index + 1;
+					returnIndices.Enqueue(index + 1);
+					//returnIndex = index + 1;
 					//else
 					//	returnIndex = instructions.Count - 1;
-					Console.WriteLine("found go to");
+					Console.WriteLine("found go to: " + instructions[index].Value);
 				}
 
 				if (!nextInstructionFound && (instructions[index].Command == InstructionSet.Label && instructions[index].Value == currentSearchTerm))
 				{
 					nextInstructionFound = true;
-					labelReturnFound = false;
+					//labelReturnFound = false;
+					returnLabelsNotFound++;//---------------not all labels have return statements, goto label usually has a goto at the end again, not always
+
 					//	mainInstructions.Add(instructions[index]);
 					Console.WriteLine("found go to label");
 				}
 
-				if (nextInstructionFound && instructions[index].Command == InstructionSet.Return && !labelReturnFound)
+				if (!labelHasEnded && (instructions[index].Command == InstructionSet.Return || instructions[index].Command == InstructionSet.GoTo) && returnLabelsNotFound > 0)
 				{
-					labelReturnFound = true;
+					//labelReturnFound = true;
+					labelHasEnded = true;
+					returnLabelsNotFound--;
+					Console.WriteLine("RETURN LABELS NOT FOUND: " + returnLabelsNotFound);
 					mainInstructions.Add(instructions[index]);
-					index = returnIndex;
+					index = returnIndices.Dequeue();
+					Console.WriteLine("INDEX IS NOW: " + index);
+					if (searchTerms.Count > 0)
+						currentSearchTerm = searchTerms.Dequeue();
 					Console.WriteLine("found label return");
 					continue;
 				}
@@ -610,8 +627,10 @@ namespace jaz.Logic
 				{
 					//	mainInstructions.Add(instructions[index]);
 					mainIsPopulated = true;
+					mainInstructions.Add(instructions[index]);
 					//nextInstructionFound = true;
-					Console.WriteLine("main is populated");
+					Console.WriteLine("MAIN IS POPULATED");//this should probably just break here
+					break;
 				}
 
 				if (nextInstructionFound)

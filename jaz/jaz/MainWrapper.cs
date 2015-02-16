@@ -15,7 +15,7 @@ namespace jaz
 			 *		output of executed instructions are displayed
 			 *			file or console?
 			 */
-			new Interpreter(@"Resources\guesstheanswer.jaz").Execute();//--remove parameter
+			new Interpreter(@"Resources\demo.jaz").Execute();//--remove parameter
 		}
 	}
 }

@@ -14,6 +14,8 @@ namespace jaz.Logic
 		private List<Instruction> _currentFunctionToBePopulated;
 		private bool _newVariablesAreLocal = false;
 
+		private int numMainCallsRemaining = 0;
+
 		public InstructionSetHandler()
 		{
 			this._operationStack = new Stack();
@@ -463,7 +465,8 @@ namespace jaz.Logic
 			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.End && y.GUID == guid) + 1;
 			subroutine = tempInstructions.GetRange(beginning, end - beginning);//is this off by 1?
 
-			subroutine = AssignScope(subroutine);
+			if (numMainCallsRemaining == 0)
+				subroutine = AssignScope(subroutine);
 			//--------------------------------------------------------------------------------------old hacky logic
 			//	this._newVariablesAreLocal = true;
 			//	Instruction previousInstr = new Instruction();
@@ -494,6 +497,11 @@ namespace jaz.Logic
 		private void End()
 		{
 			this._newVariablesAreLocal = false;
+
+			if (numMainCallsRemaining > 0)
+				numMainCallsRemaining--;
+
+			Console.WriteLine("CALLS REMAINING: " + numMainCallsRemaining);
 		}
 
 		private void Return(Guid returnToInstruction)//use guid to return to call index + 1
@@ -539,7 +547,7 @@ namespace jaz.Logic
 			bool labelReturnFound = true;
 			bool isInBeginBlock = false;
 
-			while (!mainIsPopulated)
+			while (!mainIsPopulated && index < instructions.Count)
 			{
 				//Console.WriteLine(instructions[index].Command);
 
@@ -548,7 +556,10 @@ namespace jaz.Logic
 					nextInstructionFound = false;
 					mainInstructions.Add(instructions[index]);
 					currentSearchTerm = instructions[index].Value;
+					//if (index + 1 <= instructions.Count - 1)
 					returnIndex = index + 1;
+					//else
+					//	returnIndex = instructions.Count - 1;
 					Console.WriteLine("found go to");
 				}
 
@@ -572,6 +583,8 @@ namespace jaz.Logic
 				if (nextInstructionFound && instructions[index].Command == InstructionSet.Begin)
 				{
 					isInBeginBlock = true;
+					numMainCallsRemaining++;
+					Console.WriteLine("INCREMENTED");
 				}
 
 				if (nextInstructionFound && instructions[index].Command == InstructionSet.End)
@@ -610,6 +623,8 @@ namespace jaz.Logic
 				}
 				index++;
 			}
+
+			this.AssignScope(mainInstructions, "main");
 			this.IterateThrough(mainInstructions, false);
 		}
 
@@ -704,14 +719,20 @@ namespace jaz.Logic
 			 * have function to take in instructions and insert scope
 			 *	AssignScope(instructions, labelName = string.Empty) --optional labelName if begin/end block is within a label, otherwise this is always determining variable passing scope
 			 */
-
+			Queue<string> callQueue = new Queue<string>();
 			foreach (var item in instructions)
 			{
 				if (item.Command == InstructionSet.Call)
-					callName = item.Value;
+				{
+					callQueue.Enqueue(item.Value);
+				}
 			}
 
+			if (callQueue.Count > 0)
+				callName = callQueue.Dequeue();
+
 			bool withinBegin = false;
+			bool afterCall = false;
 			foreach (var item in instructions)
 			{
 				if (item.Command == InstructionSet.Begin)
@@ -719,34 +740,51 @@ namespace jaz.Logic
 
 				if (withinBegin)
 				{
+					if (item.Command == InstructionSet.Call)
+					{
+						afterCall = true;
+						Console.WriteLine("AFTER CALL");
+					}
+
 					if (!string.IsNullOrWhiteSpace(labelName))
 					{
-						if (item.Command == InstructionSet.LValue)
+						if (item.Command == InstructionSet.LValue && !afterCall)
 							item.Value = callName + "::" + item.Value;
 
-						if (item.Command == InstructionSet.RValue)
+						if (item.Command == InstructionSet.LValue && afterCall)
 							item.Value = labelName + "::" + item.Value;
+
+						if (item.Command == InstructionSet.RValue && !afterCall)
+							item.Value = labelName + "::" + item.Value;
+
+						if (item.Command == InstructionSet.RValue && afterCall)
+							item.Value = callName + "::" + item.Value;
 					}
 					else
 					{
 						if (item.Command == InstructionSet.LValue)
 							item.Value = callName + "::" + item.Value;
 
-						if (item.Command == InstructionSet.RValue)
+						if (item.Command == InstructionSet.RValue)//necessary?
 							item.Value = "::" + item.Value;
 					}
 				}
 				else
 				{
-					if ((item.Command == InstructionSet.LValue || item.Command == InstructionSet.RValue) && string.IsNullOrWhiteSpace(labelName))
-						item.Value = labelName + "::" + item.Value;
+					//if ((item.Command == InstructionSet.LValue || item.Command == InstructionSet.RValue) && string.IsNullOrWhiteSpace(labelName))
+					//	item.Value = "::" + item.Value;//check is this is correct
 
 					if ((item.Command == InstructionSet.LValue || item.Command == InstructionSet.RValue) && !string.IsNullOrWhiteSpace(labelName))
-						item.Value = "::" + item.Value;
+						item.Value = labelName + "::" + item.Value;//check if this is correct
 				}
 
 				if (item.Command == InstructionSet.End)
+				{
 					withinBegin = false;
+					afterCall = false;
+					if (callQueue.Count > 0)
+						callName = callQueue.Dequeue();
+				}
 
 				tempInstructions.Add(item);
 			}

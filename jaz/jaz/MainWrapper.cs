@@ -15,7 +15,17 @@ namespace jaz
 			 *		output of executed instructions are displayed
 			 *			file or console?
 			 */
-			new Interpreter(@"Resources\operatorsTest.jaz").Execute();
+			new Interpreter(@"Resources\recfact.jaz").Execute();//--remove parameter
 		}
 	}
 }
+
+/*
+ * currently not working
+ *	demo.jaz -- probably local vs global variable issue, one value wont update locally or passed --- works
+ *	recFact.jaz -- null reference exception, now stack overflow exception, now key not found exception ------------why?
+ *	foo.jaz -- local vs global variable issue --- works
+ *	factProc.jaz -- local vs global cariable issue --- works
+ *	operatorsTest.jaz --- works
+ *  guessTheAnswer.jaz -- same key already added issue ---works
+*/

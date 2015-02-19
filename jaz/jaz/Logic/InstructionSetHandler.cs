@@ -515,6 +515,19 @@ namespace jaz.Logic
 
 		private void Call(string functionName, Guid functionGUID)
 		{
+			/* should be able to return if called function is recursive since the return location will be within the function itself
+			 * `need to make sure that the return at the end returns to the main method when all the recursive calls are completed
+			 *	maybe parse the call and label to make sure what guid goes to what location so that the execution is run correctly
+			 *		there is a label (function)
+			 *			inside is a begin
+			 *				inside is a call to the label (function) again
+			 *				return should be to the label
+			 *				save the state of the variable
+			 *					create a unique variable
+			 *						guid?
+			 *		should return to the originating call
+			 */
+
 			this._operationStack.Push(this._instructionsToBeExecuted[this._instructionsToBeExecuted.FindIndex(x => x.GUID == functionGUID) + 1].GUID);
 
 			if (!this._symbolTable.ContainsKey(functionName))

@@ -473,6 +473,11 @@ namespace jaz.Logic
 
 			if (this._numMainCallsRemaining == 0)
 				subroutine = AssignScope(subroutine);
+
+			if (this._currentRecursionDatum != null)//needs to be refactored
+			{
+				this.SaveVariableStates(InstructionSet.Begin);
+			}
 			//--------------------------------------------------------------------------------------old hacky logic
 			//	this._newVariablesAreLocal = true;
 			//	Instruction previousInstr = new Instruction();
@@ -507,6 +512,9 @@ namespace jaz.Logic
 			if (this._numMainCallsRemaining > 0)
 				this._numMainCallsRemaining--;
 
+			if (this._currentRecursionDatum != null)
+				this.SaveVariableStates(InstructionSet.End);
+
 			Console.WriteLine("CALLS REMAINING: " + this._numMainCallsRemaining);
 		}
 
@@ -524,6 +532,30 @@ namespace jaz.Logic
 				this._recursiveCallsRemaining--;
 
 				returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.GUID == returnToInstruction);
+
+				if (this._currentRecursionDatum != null && this._currentRecursionDatum.RecursiveValueStorage.Count > 0)
+				{
+					foreach (var item in this._currentRecursionDatum.RecursiveValueStorage)
+					{
+						this._symbolTable[item.Key] = item.Value.Pop();
+					}
+				}
+				//List<Instruction> function = (List<Instruction>)this._symbolTable[functionName];
+
+				//foreach (var instr in function) //this should probably be done during runtime so that the values actually exist
+				//{
+				//	if (instr.Command == InstructionSet.RValue)
+				//	{
+				//		if (!this._currentRecursionDatum.RecursiveValueStorage.ContainsKey(instr.Value))
+				//		{
+				//			this._currentRecursionDatum.RecursiveValueStorage.Add(instr.Value, new Stack<int>());
+				//		}
+				//		this._currentRecursionDatum.RecursiveValueStorage[instr.Value].Push(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));
+				//	}
+				//	if (instr.Command == InstructionSet.Begin)
+				//		break;
+				//}
+
 				//need to decrement the recursion call count and pop the recursion value stack
 			}
 
@@ -745,9 +777,10 @@ namespace jaz.Logic
 			//string returnVal;
 			//if (populateCall)//-----------------what was this bool supposed to be?
 			//returnVal =
-			DetermineIfRecursionExists(function, functionName, functionGUID);
 
 			function = AssignScope(function, functionName);
+
+			this.DetermineIfRecursionExists(function, functionName, functionGUID);
 			/* if in label
 			 *	if find begin
 			 *		iterate to find call
@@ -912,7 +945,7 @@ namespace jaz.Logic
 						int returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == functionGUID) + 1;
 						Instruction returnValue = this._instructionsToBeExecuted[returnIndex];
 
-						this._recursionQueue.Enqueue(new RecursionDatum { RecursionID = this._instructionsToBeExecuted[recursiveReturnIndex - 1].GUID, RecursiveReturnValue = recursiveReturnValue.GUID, OriginalReturnValue = returnValue.GUID });
+						this._recursionQueue.Enqueue(new RecursionDatum { RecursionID = this._instructionsToBeExecuted[recursiveReturnIndex - 1].GUID, RecursionFunctionName = functionName, RecursiveReturnValue = recursiveReturnValue.GUID, OriginalReturnValue = returnValue.GUID });
 
 						this._currentRecursionDatum = this._recursionQueue.Peek();//////////how should I go about this?
 					}
@@ -923,6 +956,45 @@ namespace jaz.Logic
 			}
 
 			//return string.Empty;
+		}
+
+		private void SaveVariableStates(string fromInstruction)
+		{
+			List<Instruction> function = (List<Instruction>)this._symbolTable[this._currentRecursionDatum.RecursionFunctionName];
+
+			bool withinBegin = false;
+			bool afterCall = false;
+			foreach (var instr in function) //this should probably be done during runtime so that the values actually exist
+			{
+				if (fromInstruction == InstructionSet.Begin)
+				{
+					if (instr.Command == InstructionSet.RValue)
+					{
+						if (!this._currentRecursionDatum.RecursiveValueStorage.ContainsKey(instr.Value))
+						{
+							this._currentRecursionDatum.RecursiveValueStorage.Add(instr.Value, new Stack<int>());
+						}
+						this._currentRecursionDatum.RecursiveValueStorage[instr.Value].Push(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));
+					}
+					if (instr.Command == InstructionSet.Begin)
+						break;
+				}
+				else if (fromInstruction == InstructionSet.End)
+				{
+					if (instr.Command == InstructionSet.Begin)
+						withinBegin = true;
+					if (instr.Command == InstructionSet.Call)
+						afterCall = true;
+					if (withinBegin && afterCall && instr.Command == InstructionSet.RValue)
+					{
+						if (!this._currentRecursionDatum.RecursiveValueStorage.ContainsKey(instr.Value))
+						{
+							this._currentRecursionDatum.RecursiveValueStorage.Add(instr.Value, new Stack<int>());
+						}
+						this._currentRecursionDatum.RecursiveValueStorage[instr.Value].Push(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));//this value is zero, is it local when it is placed in the dictionary?
+					}
+				}
+			}
 		}
 
 		#endregion Helpers

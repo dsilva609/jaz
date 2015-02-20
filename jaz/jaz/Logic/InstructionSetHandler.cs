@@ -257,6 +257,9 @@ namespace jaz.Logic
 			List<Instruction> instructions = this._instructionsToBeExecuted.GetRange(start, end - start + 1);
 
 			this.IterateThrough(instructions, true);
+
+			if (this._currentRecursionDatum != null)
+				this.SaveVariableStates(InstructionSet.End);
 		}
 
 		private void GoFalse(string nextInstruction)//guid or just label?
@@ -512,9 +515,6 @@ namespace jaz.Logic
 			if (this._numMainCallsRemaining > 0)
 				this._numMainCallsRemaining--;
 
-			if (this._currentRecursionDatum != null)
-				this.SaveVariableStates(InstructionSet.End);
-
 			Console.WriteLine("CALLS REMAINING: " + this._numMainCallsRemaining);
 		}
 
@@ -531,7 +531,7 @@ namespace jaz.Logic
 				returnToInstruction = currentRecursionDatum.RecursiveReturnValue;
 				this._recursiveCallsRemaining--;
 
-				returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.GUID == returnToInstruction);
+				returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.GUID == returnToInstruction);//can be removed
 
 				if (this._currentRecursionDatum != null && this._currentRecursionDatum.RecursiveValueStorage.Count > 0)
 				{
@@ -568,7 +568,8 @@ namespace jaz.Logic
 				returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.GUID == returnToInstruction);
 				//this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == returnToInstruction) + 1;
 			}
-
+			if (this._currentRecursionDatum == null)/////////////////////////////////need to handle base case
+				returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == returnToInstruction) + 1;
 			Instruction returnValue = this._instructionsToBeExecuted[returnIndex];//currently returns null
 			this.GoTo(returnValue.Command, true, returnValue.GUID);
 		}
@@ -823,6 +824,13 @@ namespace jaz.Logic
 			List<Instruction> tempInstructions = new List<Instruction>();
 			string callName = string.Empty;
 			/* if in label
+			 *  if find gofalse || gotrue
+			 *		save label
+			 *		find label
+			 *			if find lvalue
+			 *				scope is originalLabel::variableName
+			 *			if find rvalue
+			 *				scope is go value::variableName
 			 *	if find begin
 			 *		iterate to find call
 			 *		save call name
@@ -851,6 +859,21 @@ namespace jaz.Logic
 			bool afterCall = false;
 			foreach (var item in instructions)
 			{
+				if (item.Command == InstructionSet.GoFalse || item.Command == InstructionSet.GoTrue)
+				{
+					Console.WriteLine("FOUND A GO FUNCTION");
+
+					int goStart = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Label && x.Value == item.Value);
+					while (this._instructionsToBeExecuted[goStart].Command != InstructionSet.Return)
+					{
+						if (this._instructionsToBeExecuted[goStart].Command == InstructionSet.LValue)
+						{
+							this._instructionsToBeExecuted[goStart].Value = labelName + "::" + this._instructionsToBeExecuted[goStart].Value;
+						}
+						goStart++;
+					}
+				}
+
 				if (item.Command == InstructionSet.Begin)
 					withinBegin = true;
 
@@ -974,6 +997,9 @@ namespace jaz.Logic
 						{
 							this._currentRecursionDatum.RecursiveValueStorage.Add(instr.Value, new Stack<int>());
 						}
+
+						Console.WriteLine("---------------------------" + instr.Value);
+						Console.WriteLine(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));
 						this._currentRecursionDatum.RecursiveValueStorage[instr.Value].Push(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));
 					}
 					if (instr.Command == InstructionSet.Begin)
@@ -991,6 +1017,17 @@ namespace jaz.Logic
 						{
 							this._currentRecursionDatum.RecursiveValueStorage.Add(instr.Value, new Stack<int>());
 						}
+						Console.WriteLine("---------------------------" + instr.Value);
+						Console.WriteLine(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));
+
+						this._currentRecursionDatum.RecursiveValueStorage[instr.Value].Push(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));//this value is zero, is it local when it is placed in the dictionary?
+					}
+					if (withinBegin && instr.Command == InstructionSet.End)
+						withinBegin = false;
+					if (afterCall && !withinBegin && instr.Command == InstructionSet.LValue)
+					{
+						Console.WriteLine("---------------------------" + instr.Value);
+						Console.WriteLine(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));
 						this._currentRecursionDatum.RecursiveValueStorage[instr.Value].Push(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));//this value is zero, is it local when it is placed in the dictionary?
 					}
 				}

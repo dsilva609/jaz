@@ -15,8 +15,9 @@ namespace jaz.Logic
 		private bool _newVariablesAreLocal = false;//really needed?
 
 		private int _numMainCallsRemaining;
-
+		private int _recursiveCallsRemaining;
 		private Queue<RecursionDatum> _recursionQueue;
+		private RecursionDatum _currentRecursionDatum;
 
 		public InstructionSetHandler()
 		{
@@ -24,6 +25,7 @@ namespace jaz.Logic
 			this._symbolTable = new Dictionary<string, object>();
 			this._numMainCallsRemaining = 0;
 			this._recursionQueue = new Queue<RecursionDatum>();
+			this._recursiveCallsRemaining = 0;
 		}
 
 		public void Run(List<Instruction> instructions)
@@ -512,16 +514,29 @@ namespace jaz.Logic
 		{
 			//need to make sure that it goes back to the correct instruction
 			//this._operationStack.Pop();/////////////////////////////////////////////probably needed to keep stack clean
+			int returnIndex = -1;
 
-			if (this._recursionQueue != null && this._recursionQueue.Count != 0)
+			if (this._recursionQueue.Count != 0)
 			{
 				Console.WriteLine("RETURNING FROM RECURSION");
 				RecursionDatum currentRecursionDatum = this._recursionQueue.Peek();
 				returnToInstruction = currentRecursionDatum.RecursiveReturnValue;
+				this._recursiveCallsRemaining--;
+
+				returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.GUID == returnToInstruction);
 				//need to decrement the recursion call count and pop the recursion value stack
 			}
 
-			int returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == returnToInstruction) + 1;
+			if (this._recursiveCallsRemaining == 0 && this._recursionQueue.Count != 0)
+				this._recursionQueue.Dequeue();
+
+			if (this._recursionQueue.Count == 0)
+			{
+				returnToInstruction = this._currentRecursionDatum.OriginalReturnValue;
+				returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.GUID == returnToInstruction);
+				//this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == returnToInstruction) + 1;
+			}
+
 			Instruction returnValue = this._instructionsToBeExecuted[returnIndex];//currently returns null
 			this.GoTo(returnValue.Command, true, returnValue.GUID);
 		}
@@ -555,6 +570,17 @@ namespace jaz.Logic
 				//				this._operationStack.Push(returnValue);/////////////////////////////////////////////////////move
 			}
 			//else
+			else //--function should already exist for recursion to occur
+			{
+				if (this._recursionQueue.Count != 0)
+				{
+					if (functionGUID == this._currentRecursionDatum.RecursionID)
+					{
+						this._recursiveCallsRemaining++;
+					}
+				}
+			}
+
 			this.IterateThrough((List<Instruction>)this._symbolTable[functionName], true);
 
 			/*
@@ -719,7 +745,7 @@ namespace jaz.Logic
 			//string returnVal;
 			//if (populateCall)//-----------------what was this bool supposed to be?
 			//returnVal =
-			DetermineReturnLocation(function, functionName, functionGUID);
+			DetermineIfRecursionExists(function, functionName, functionGUID);
 
 			function = AssignScope(function, functionName);
 			/* if in label
@@ -862,7 +888,7 @@ namespace jaz.Logic
 			return tempInstructions;
 		}
 
-		private void DetermineReturnLocation(List<Instruction> function, string functionName, Guid functionGUID)//probably can be moved to assign scope function
+		private void DetermineIfRecursionExists(List<Instruction> function, string functionName, Guid functionGUID)//probably can be moved to assign scope function
 		{
 			bool functionIsRecursive;  ///really needed?
 			bool withinBegin = false;
@@ -886,7 +912,9 @@ namespace jaz.Logic
 						int returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == functionGUID) + 1;
 						Instruction returnValue = this._instructionsToBeExecuted[returnIndex];
 
-						this._recursionQueue.Enqueue(new RecursionDatum { RecursionID = functionName, RecursiveReturnValue = recursiveReturnValue.GUID, OriginalReturnValue = returnValue.GUID });
+						this._recursionQueue.Enqueue(new RecursionDatum { RecursionID = this._instructionsToBeExecuted[recursiveReturnIndex - 1].GUID, RecursiveReturnValue = recursiveReturnValue.GUID, OriginalReturnValue = returnValue.GUID });
+
+						this._currentRecursionDatum = this._recursionQueue.Peek();//////////how should I go about this?
 					}
 
 					if (item.Command == InstructionSet.End)

@@ -5,7 +5,7 @@ namespace jaz.Objects
 {
 	public class RecursionDatum
 	{
-		public string RecursionID { get; set; }
+		public Guid RecursionID { get; set; }
 
 		public int CallsRemaining { get; set; }
 

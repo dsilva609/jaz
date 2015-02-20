@@ -46,6 +46,7 @@
     <Compile Include="Logic\Interpreter.cs" />
     <Compile Include="Logic\InstructionParser.cs" />
     <Compile Include="MainWrapper.cs" />
+    <Compile Include="Objects\RecursionDatum.cs" />
     <Compile Include="Objects\Instruction.cs" />
     <Compile Include="Objects\InstructionSet.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

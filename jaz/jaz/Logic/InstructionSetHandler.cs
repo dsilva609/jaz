@@ -14,12 +14,16 @@ namespace jaz.Logic
 		private List<Instruction> _currentFunctionToBePopulated;//is this used?
 		private bool _newVariablesAreLocal = false;//really needed?
 
-		private int numMainCallsRemaining = 0;
+		private int _numMainCallsRemaining;
+
+		private Queue<RecursionDatum> _recursionQueue;
 
 		public InstructionSetHandler()
 		{
 			this._operationStack = new Stack();
 			this._symbolTable = new Dictionary<string, object>();
+			this._numMainCallsRemaining = 0;
+			this._recursionQueue = new Queue<RecursionDatum>();
 		}
 
 		public void Run(List<Instruction> instructions)
@@ -465,7 +469,7 @@ namespace jaz.Logic
 			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.End && y.GUID == guid) + 1;
 			subroutine = tempInstructions.GetRange(beginning, end - beginning);//is this off by 1?
 
-			if (numMainCallsRemaining == 0)
+			if (this._numMainCallsRemaining == 0)
 				subroutine = AssignScope(subroutine);
 			//--------------------------------------------------------------------------------------old hacky logic
 			//	this._newVariablesAreLocal = true;
@@ -498,16 +502,25 @@ namespace jaz.Logic
 		{
 			this._newVariablesAreLocal = false;
 
-			if (numMainCallsRemaining > 0)
-				numMainCallsRemaining--;
+			if (this._numMainCallsRemaining > 0)
+				this._numMainCallsRemaining--;
 
-			Console.WriteLine("CALLS REMAINING: " + numMainCallsRemaining);
+			Console.WriteLine("CALLS REMAINING: " + this._numMainCallsRemaining);
 		}
 
 		private void Return(Guid returnToInstruction)//use guid to return to call index + 1
 		{
 			//need to make sure that it goes back to the correct instruction
-			//this._operationStack.Pop();
+			//this._operationStack.Pop();/////////////////////////////////////////////probably needed to keep stack clean
+
+			if (this._recursionQueue != null && this._recursionQueue.Count != 0)
+			{
+				Console.WriteLine("RETURNING FROM RECURSION");
+				RecursionDatum currentRecursionDatum = this._recursionQueue.Peek();
+				returnToInstruction = currentRecursionDatum.RecursiveReturnValue;
+				//need to decrement the recursion call count and pop the recursion value stack
+			}
+
 			int returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == returnToInstruction) + 1;
 			Instruction returnValue = this._instructionsToBeExecuted[returnIndex];//currently returns null
 			this.GoTo(returnValue.Command, true, returnValue.GUID);
@@ -534,6 +547,8 @@ namespace jaz.Logic
 			if (!this._symbolTable.ContainsKey(functionName))
 			{
 				this.SearchAndPopulateFunction(functionName, functionGUID, true);
+
+				//count number of recursive calls remaining so that the return returns to the inner recursive call, when remaining recursive calls reaches 0, return value is set back to originating caller
 
 				//string returnValue = DetermineReturnLocation(functionName, functionGUID);//move
 
@@ -618,7 +633,7 @@ namespace jaz.Logic
 				if (nextInstructionFound && instructions[index].Command == InstructionSet.Begin)
 				{
 					isInBeginBlock = true;
-					numMainCallsRemaining++;
+					this._numMainCallsRemaining++;
 					Console.WriteLine("INCREMENTED");
 				}
 
@@ -701,9 +716,10 @@ namespace jaz.Logic
 			Instruction previousInstr = new Instruction();//is this used anymore?
 			function = tempInstructions.GetRange(start, end - start + 1);
 
-			string returnVal;
-			if (populateCall)
-				returnVal = DetermineReturnLocation(function, functionName, functionGUID);
+			//string returnVal;
+			//if (populateCall)//-----------------what was this bool supposed to be?
+			//returnVal =
+			DetermineReturnLocation(function, functionName, functionGUID);
 
 			function = AssignScope(function, functionName);
 			/* if in label
@@ -846,9 +862,9 @@ namespace jaz.Logic
 			return tempInstructions;
 		}
 
-		private string DetermineReturnLocation(List<Instruction> function, string functionName, Guid functionGUIDs)//probably can be moved to assign scope function
+		private void DetermineReturnLocation(List<Instruction> function, string functionName, Guid functionGUID)//probably can be moved to assign scope function
 		{
-			bool functionIsRecursive;
+			bool functionIsRecursive;  ///really needed?
 			bool withinBegin = false;
 			//int numberRecursiveCalls = 0;//count number of recursive calls remaining so that the return returns to the inner recursive call, when remaining recursive calls reaches 0, return value is set back to originating caller
 
@@ -859,15 +875,26 @@ namespace jaz.Logic
 
 				if (withinBegin)
 				{
-					if (item.Value == functionName)
+					if (item.Command == InstructionSet.Call && item.Value == functionName)
 					{
 						Console.WriteLine("RECURSION");
 						functionIsRecursive = true;
+
+						int recursiveReturnIndex = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == item.GUID) + 1;//logic is wrong, should get index from global instruction list of recursive call name and guid -- fixed
+						Instruction recursiveReturnValue = this._instructionsToBeExecuted[recursiveReturnIndex];
+
+						int returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == functionGUID) + 1;
+						Instruction returnValue = this._instructionsToBeExecuted[returnIndex];
+
+						this._recursionQueue.Enqueue(new RecursionDatum { RecursionID = functionName, RecursiveReturnValue = recursiveReturnValue.GUID, OriginalReturnValue = returnValue.GUID });
 					}
+
+					if (item.Command == InstructionSet.End)
+						withinBegin = false;
 				}
 			}
 
-			return string.Empty;
+			//return string.Empty;
 		}
 
 		#endregion Helpers

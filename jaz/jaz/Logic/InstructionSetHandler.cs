@@ -10,9 +10,9 @@ namespace jaz.Logic
 		private Stack _operationStack;
 		private Dictionary<string, object> _symbolTable;
 		private List<Instruction> _instructionsToBeExecuted;
-		private bool _populatingFunction = false;
-		private List<Instruction> _currentFunctionToBePopulated;
-		private bool _newVariablesAreLocal = false;
+		private bool _populatingFunction = false;//really needed?
+		private List<Instruction> _currentFunctionToBePopulated;//is this used?
+		private bool _newVariablesAreLocal = false;//really needed?
 
 		private int numMainCallsRemaining = 0;
 
@@ -525,14 +525,19 @@ namespace jaz.Logic
 			 *				save the state of the variable
 			 *					create a unique variable
 			 *						guid?
-			 *		should return to the originating call
+			 *						separate stack that pops top after each recursive call?
+			 *		should return to the originating call, most likely main
 			 */
 
-			this._operationStack.Push(this._instructionsToBeExecuted[this._instructionsToBeExecuted.FindIndex(x => x.GUID == functionGUID) + 1].GUID);
+			//this._operationStack.Push(this._instructionsToBeExecuted[this._instructionsToBeExecuted.FindIndex(x => x.GUID == functionGUID) + 1].GUID);
 
 			if (!this._symbolTable.ContainsKey(functionName))
 			{
-				this.SearchAndPopulateFunction(functionName, functionGUID);
+				this.SearchAndPopulateFunction(functionName, functionGUID, true);
+
+				//string returnValue = DetermineReturnLocation(functionName, functionGUID);//move
+
+				//				this._operationStack.Push(returnValue);/////////////////////////////////////////////////////move
 			}
 			//else
 			this.IterateThrough((List<Instruction>)this._symbolTable[functionName], true);
@@ -561,7 +566,7 @@ namespace jaz.Logic
 			//int returnIndex = 0;
 			//bool labelReturnFound = true;
 			int returnLabelsNotFound = 0;
-			bool isInBeginBlock = false;
+			bool isInBeginBlock = false;//--marked for removal
 			bool labelHasEnded = false;
 
 			//if (searchTerms.Count > 0)
@@ -666,14 +671,14 @@ namespace jaz.Logic
 			{
 				var test = item.Command;//for testing
 				var test2 = item.Value;
-				if (!this._populatingFunction)
+				if (!this._populatingFunction)/////most likely redundant when populateFunction is removed
 					this.ExecuteInstruction(item);
 				else
 					this.PopulateFunction(item);
 			}
 		}
 
-		private void PopulateFunction(Instruction instruction)
+		private void PopulateFunction(Instruction instruction)/////////////probably not needed
 		{
 			if (instruction.Value == InstructionSet.Return)
 			{
@@ -686,15 +691,19 @@ namespace jaz.Logic
 				this._currentFunctionToBePopulated.Add(instruction);
 		}
 
-		private void SearchAndPopulateFunction(string functionName, Guid functionGUID)//is the guid even used?
+		private void SearchAndPopulateFunction(string functionName, Guid functionGUID, bool populateCall = false)//is the guid even used?
 		{
 			var tempInstructions = this._instructionsToBeExecuted;
 			List<Instruction> function;
 			int start = tempInstructions.FindIndex(x => x.Command == InstructionSet.Label && x.Value == functionName) + 1;
 			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.Return && y.GUID == tempInstructions[start - 1].GUID);
 
-			Instruction previousInstr = new Instruction();
+			Instruction previousInstr = new Instruction();//is this used anymore?
 			function = tempInstructions.GetRange(start, end - start + 1);
+
+			string returnVal;
+			if (populateCall)
+				returnVal = DetermineReturnLocation(function, functionName, functionGUID);
 
 			function = AssignScope(function, functionName);
 			/* if in label
@@ -774,6 +783,9 @@ namespace jaz.Logic
 				{
 					if (item.Command == InstructionSet.Call)
 					{
+						//if (item.Value == labelName)
+						//	Console.WriteLine("RECURSIVE CALL FOUND");
+
 						afterCall = true;
 						Console.WriteLine("AFTER CALL");
 					}
@@ -832,6 +844,30 @@ namespace jaz.Logic
 				Console.WriteLine("instruction: " + item.Command + " " + item.Value);
 
 			return tempInstructions;
+		}
+
+		private string DetermineReturnLocation(List<Instruction> function, string functionName, Guid functionGUIDs)//probably can be moved to assign scope function
+		{
+			bool functionIsRecursive;
+			bool withinBegin = false;
+			//int numberRecursiveCalls = 0;//count number of recursive calls remaining so that the return returns to the inner recursive call, when remaining recursive calls reaches 0, return value is set back to originating caller
+
+			foreach (var item in function)
+			{
+				if (item.Command == InstructionSet.Begin)
+					withinBegin = true;
+
+				if (withinBegin)
+				{
+					if (item.Value == functionName)
+					{
+						Console.WriteLine("RECURSION");
+						functionIsRecursive = true;
+					}
+				}
+			}
+
+			return string.Empty;
 		}
 
 		#endregion Helpers

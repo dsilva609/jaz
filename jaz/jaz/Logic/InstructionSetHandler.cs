@@ -18,6 +18,7 @@ namespace jaz.Logic
 		private int _recursiveCallsRemaining;
 		private Queue<RecursionDatum> _recursionQueue;
 		private RecursionDatum _currentRecursionDatum;
+		private bool _currentlyInRecursion;
 
 		public InstructionSetHandler()
 		{
@@ -562,10 +563,11 @@ namespace jaz.Logic
 				//need to decrement the recursion call count and pop the recursion value stack
 			}
 
-			if (this._recursionQueue.Count == 0)
+			if (this._recursionQueue.Count == 0 && this._currentlyInRecursion)
 			{
 				returnToInstruction = this._currentRecursionDatum.OriginalReturnValue;
 				returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.GUID == returnToInstruction);
+				this._currentlyInRecursion = false;
 				//this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == returnToInstruction) + 1;
 			}
 			if (this._currentRecursionDatum == null)/////////////////////////////////need to handle base case
@@ -946,7 +948,7 @@ namespace jaz.Logic
 
 		private void DetermineIfRecursionExists(List<Instruction> function, string functionName, Guid functionGUID)//probably can be moved to assign scope function
 		{
-			bool functionIsRecursive;  ///really needed?
+			//bool functionIsRecursive;  ///really needed?
 			bool withinBegin = false;
 			//int numberRecursiveCalls = 0;//count number of recursive calls remaining so that the return returns to the inner recursive call, when remaining recursive calls reaches 0, return value is set back to originating caller
 
@@ -960,7 +962,7 @@ namespace jaz.Logic
 					if (item.Command == InstructionSet.Call && item.Value == functionName)
 					{
 						Console.WriteLine("RECURSION");
-						functionIsRecursive = true;
+						this._currentlyInRecursion = true;
 
 						int recursiveReturnIndex = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == item.GUID) + 1;//logic is wrong, should get index from global instruction list of recursive call name and guid -- fixed
 						Instruction recursiveReturnValue = this._instructionsToBeExecuted[recursiveReturnIndex];

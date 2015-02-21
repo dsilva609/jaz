@@ -15,7 +15,7 @@ namespace jaz
 			 *		output of executed instructions are displayed
 			 *			file or console?
 			 */
-			new Interpreter(@"Resources\recfact.jaz").Execute();//--remove parameter
+			new Interpreter().Execute();//--remove parameter
 		}
 	}
 }

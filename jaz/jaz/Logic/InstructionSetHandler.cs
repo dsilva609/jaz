@@ -10,24 +10,37 @@ namespace jaz.Logic
 		private Stack _operationStack;
 		private Dictionary<string, object> _symbolTable;
 		private List<Instruction> _instructionsToBeExecuted;
-		private bool _populatingFunction = false;
-		private List<Instruction> _currentFunctionToBePopulated;
-		private bool _newVariablesAreLocal = false;
+		private bool _populatingFunction = false;//really needed?
+		private List<Instruction> _currentFunctionToBePopulated;//is this used?
+		private bool _newVariablesAreLocal = false;//really needed?
 
-		private int numMainCallsRemaining = 0;
+		private int _numMainCallsRemaining;
+		private int _recursiveCallsRemaining;
+		private Queue<RecursionDatum> _recursionQueue;
+		private RecursionDatum _currentRecursionDatum;
+		private bool _currentlyInRecursion;
+		private int _exitCode;
 
 		public InstructionSetHandler()
 		{
 			this._operationStack = new Stack();
 			this._symbolTable = new Dictionary<string, object>();
+			this._numMainCallsRemaining = 0;
+			this._recursionQueue = new Queue<RecursionDatum>();
+			this._recursiveCallsRemaining = 0;
+			this._exitCode = -1;
 		}
 
-		public void Run(List<Instruction> instructions)
+		public int Run(List<Instruction> instructions = null)
 		{
-			this._instructionsToBeExecuted = instructions;
+			if (this._exitCode != 0)
+			{
+				this._instructionsToBeExecuted = instructions;
 
-			this.SetInitialRun(this._instructionsToBeExecuted);//////////
+				this.SetInitialRun(this._instructionsToBeExecuted);//////////
+			}
 
+			return this._exitCode;
 			//	this.IterateThrough(this._instructionsToBeExecuted, false);
 		}
 
@@ -250,7 +263,13 @@ namespace jaz.Logic
 			int end = this._instructionsToBeExecuted.Count - 1;//make sure this number is not off by 1
 			List<Instruction> instructions = this._instructionsToBeExecuted.GetRange(start, end - start + 1);
 
-			this.IterateThrough(instructions, true);
+			if (this._exitCode != 0)
+			{
+				this.IterateThrough(instructions, true);
+
+				if (this._currentRecursionDatum != null)
+					this.SaveVariableStates(InstructionSet.End);
+			}
 		}
 
 		private void GoFalse(string nextInstruction)//guid or just label?
@@ -275,7 +294,8 @@ namespace jaz.Logic
 
 		private void Halt()
 		{
-			Environment.Exit(0);//should this be a complete system exit?
+			this._exitCode = 0;
+			//Environment.Exit(0);//should this be a complete system exit?
 		}
 
 		#endregion Control Flow
@@ -465,8 +485,13 @@ namespace jaz.Logic
 			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.End && y.GUID == guid) + 1;
 			subroutine = tempInstructions.GetRange(beginning, end - beginning);//is this off by 1?
 
-			if (numMainCallsRemaining == 0)
+			if (this._numMainCallsRemaining == 0)
 				subroutine = AssignScope(subroutine);
+
+			if (this._currentRecursionDatum != null)//needs to be refactored
+			{
+				this.SaveVariableStates(InstructionSet.Begin);
+			}
 			//--------------------------------------------------------------------------------------old hacky logic
 			//	this._newVariablesAreLocal = true;
 			//	Instruction previousInstr = new Instruction();
@@ -498,17 +523,65 @@ namespace jaz.Logic
 		{
 			this._newVariablesAreLocal = false;
 
-			if (numMainCallsRemaining > 0)
-				numMainCallsRemaining--;
+			if (this._numMainCallsRemaining > 0)
+				this._numMainCallsRemaining--;
 
-			Console.WriteLine("CALLS REMAINING: " + numMainCallsRemaining);
+			Console.WriteLine("CALLS REMAINING: " + this._numMainCallsRemaining);
 		}
 
 		private void Return(Guid returnToInstruction)//use guid to return to call index + 1
 		{
 			//need to make sure that it goes back to the correct instruction
-			//this._operationStack.Pop();
-			int returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == returnToInstruction) + 1;
+			//this._operationStack.Pop();/////////////////////////////////////////////probably needed to keep stack clean
+			int returnIndex = -1;
+
+			if (this._recursiveCallsRemaining == 0 && this._recursionQueue.Count != 0)
+				this._recursionQueue.Dequeue();
+
+			if (this._recursionQueue.Count != 0)//maybe if recursion calls remaining is 0?
+			{
+				Console.WriteLine("RETURNING FROM RECURSION");
+				RecursionDatum currentRecursionDatum = this._recursionQueue.Peek();
+				returnToInstruction = currentRecursionDatum.RecursiveReturnValue;
+				this._recursiveCallsRemaining--;
+
+				returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.GUID == returnToInstruction);//can be removed?
+
+				if (this._currentRecursionDatum != null && this._currentRecursionDatum.RecursiveValueStorage.Count > 0)
+				{
+					foreach (var item in this._currentRecursionDatum.RecursiveValueStorage)
+					{
+						this._symbolTable[item.Key] = item.Value.Pop();
+					}
+				}
+				//List<Instruction> function = (List<Instruction>)this._symbolTable[functionName];
+
+				//foreach (var instr in function) //this should probably be done during runtime so that the values actually exist
+				//{
+				//	if (instr.Command == InstructionSet.RValue)
+				//	{
+				//		if (!this._currentRecursionDatum.RecursiveValueStorage.ContainsKey(instr.Value))
+				//		{
+				//			this._currentRecursionDatum.RecursiveValueStorage.Add(instr.Value, new Stack<int>());
+				//		}
+				//		this._currentRecursionDatum.RecursiveValueStorage[instr.Value].Push(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));
+				//	}
+				//	if (instr.Command == InstructionSet.Begin)
+				//		break;
+				//}
+
+				//need to decrement the recursion call count and pop the recursion value stack
+			}
+
+			if (this._recursionQueue.Count == 0 && this._currentlyInRecursion)
+			{
+				returnToInstruction = this._currentRecursionDatum.OriginalReturnValue;
+				returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.GUID == returnToInstruction);
+				this._currentlyInRecursion = false;
+				//this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == returnToInstruction) + 1;
+			}
+			if (this._currentRecursionDatum == null)/////////////////////////////////need to handle base case
+				returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == returnToInstruction) + 1;
 			Instruction returnValue = this._instructionsToBeExecuted[returnIndex];//currently returns null
 			this.GoTo(returnValue.Command, true, returnValue.GUID);
 		}
@@ -525,16 +598,34 @@ namespace jaz.Logic
 			 *				save the state of the variable
 			 *					create a unique variable
 			 *						guid?
-			 *		should return to the originating call
+			 *						separate stack that pops top after each recursive call?
+			 *		should return to the originating call, most likely main
 			 */
 
-			this._operationStack.Push(this._instructionsToBeExecuted[this._instructionsToBeExecuted.FindIndex(x => x.GUID == functionGUID) + 1].GUID);
+			//this._operationStack.Push(this._instructionsToBeExecuted[this._instructionsToBeExecuted.FindIndex(x => x.GUID == functionGUID) + 1].GUID);
 
 			if (!this._symbolTable.ContainsKey(functionName))
 			{
-				this.SearchAndPopulateFunction(functionName, functionGUID);
+				this.SearchAndPopulateFunction(functionName, functionGUID, true);
+
+				//count number of recursive calls remaining so that the return returns to the inner recursive call, when remaining recursive calls reaches 0, return value is set back to originating caller
+
+				//string returnValue = DetermineReturnLocation(functionName, functionGUID);//move
+
+				//				this._operationStack.Push(returnValue);/////////////////////////////////////////////////////move
 			}
 			//else
+			else //--function should already exist for recursion to occur
+			{
+				if (this._recursionQueue.Count != 0)
+				{
+					if (functionGUID == this._currentRecursionDatum.RecursionID)
+					{
+						this._recursiveCallsRemaining++;
+					}
+				}
+			}
+
 			this.IterateThrough((List<Instruction>)this._symbolTable[functionName], true);
 
 			/*
@@ -561,7 +652,7 @@ namespace jaz.Logic
 			//int returnIndex = 0;
 			//bool labelReturnFound = true;
 			int returnLabelsNotFound = 0;
-			bool isInBeginBlock = false;
+			bool isInBeginBlock = false;//--marked for removal
 			bool labelHasEnded = false;
 
 			//if (searchTerms.Count > 0)
@@ -613,7 +704,7 @@ namespace jaz.Logic
 				if (nextInstructionFound && instructions[index].Command == InstructionSet.Begin)
 				{
 					isInBeginBlock = true;
-					numMainCallsRemaining++;
+					this._numMainCallsRemaining++;
 					Console.WriteLine("INCREMENTED");
 				}
 
@@ -666,14 +757,18 @@ namespace jaz.Logic
 			{
 				var test = item.Command;//for testing
 				var test2 = item.Value;
-				if (!this._populatingFunction)
+				if (this._exitCode != 0)/////most likely redundant when populateFunction is removed
 					this.ExecuteInstruction(item);
 				else
-					this.PopulateFunction(item);
+				{
+					this.Run();
+					break;
+				}
+				//this.PopulateFunction(item);
 			}
 		}
 
-		private void PopulateFunction(Instruction instruction)
+		private void PopulateFunction(Instruction instruction)/////////////probably not needed
 		{
 			if (instruction.Value == InstructionSet.Return)
 			{
@@ -686,17 +781,23 @@ namespace jaz.Logic
 				this._currentFunctionToBePopulated.Add(instruction);
 		}
 
-		private void SearchAndPopulateFunction(string functionName, Guid functionGUID)//is the guid even used?
+		private void SearchAndPopulateFunction(string functionName, Guid functionGUID, bool populateCall = false)//is the guid even used?
 		{
 			var tempInstructions = this._instructionsToBeExecuted;
 			List<Instruction> function;
 			int start = tempInstructions.FindIndex(x => x.Command == InstructionSet.Label && x.Value == functionName) + 1;
 			int end = tempInstructions.FindIndex(y => y.Command == InstructionSet.Return && y.GUID == tempInstructions[start - 1].GUID);
 
-			Instruction previousInstr = new Instruction();
+			Instruction previousInstr = new Instruction();//is this used anymore?
 			function = tempInstructions.GetRange(start, end - start + 1);
 
+			//string returnVal;
+			//if (populateCall)//-----------------what was this bool supposed to be?
+			//returnVal =
+
 			function = AssignScope(function, functionName);
+
+			this.DetermineIfRecursionExists(function, functionName, functionGUID);
 			/* if in label
 			 *	if find begin
 			 *		iterate to find call
@@ -739,6 +840,13 @@ namespace jaz.Logic
 			List<Instruction> tempInstructions = new List<Instruction>();
 			string callName = string.Empty;
 			/* if in label
+			 *  if find gofalse || gotrue
+			 *		save label
+			 *		find label
+			 *			if find lvalue
+			 *				scope is originalLabel::variableName
+			 *			if find rvalue
+			 *				scope is go value::variableName
 			 *	if find begin
 			 *		iterate to find call
 			 *		save call name
@@ -767,6 +875,21 @@ namespace jaz.Logic
 			bool afterCall = false;
 			foreach (var item in instructions)
 			{
+				if (item.Command == InstructionSet.GoFalse || item.Command == InstructionSet.GoTrue)
+				{
+					Console.WriteLine("FOUND A GO FUNCTION");
+
+					int goStart = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Label && x.Value == item.Value);
+					while (this._instructionsToBeExecuted[goStart].Command != InstructionSet.Return)
+					{
+						if (this._instructionsToBeExecuted[goStart].Command == InstructionSet.LValue)
+						{
+							this._instructionsToBeExecuted[goStart].Value = labelName + "::" + this._instructionsToBeExecuted[goStart].Value;
+						}
+						goStart++;
+					}
+				}
+
 				if (item.Command == InstructionSet.Begin)
 					withinBegin = true;
 
@@ -774,6 +897,9 @@ namespace jaz.Logic
 				{
 					if (item.Command == InstructionSet.Call)
 					{
+						//if (item.Value == labelName)
+						//	Console.WriteLine("RECURSIVE CALL FOUND");
+
 						afterCall = true;
 						Console.WriteLine("AFTER CALL");
 					}
@@ -832,6 +958,96 @@ namespace jaz.Logic
 				Console.WriteLine("instruction: " + item.Command + " " + item.Value);
 
 			return tempInstructions;
+		}
+
+		private void DetermineIfRecursionExists(List<Instruction> function, string functionName, Guid functionGUID)//probably can be moved to assign scope function
+		{
+			//bool functionIsRecursive;  ///really needed?
+			bool withinBegin = false;
+			//int numberRecursiveCalls = 0;//count number of recursive calls remaining so that the return returns to the inner recursive call, when remaining recursive calls reaches 0, return value is set back to originating caller
+
+			foreach (var item in function)
+			{
+				if (item.Command == InstructionSet.Begin)
+					withinBegin = true;
+
+				if (withinBegin)
+				{
+					if (item.Command == InstructionSet.Call && item.Value == functionName)
+					{
+						Console.WriteLine("RECURSION");
+						this._currentlyInRecursion = true;
+
+						int recursiveReturnIndex = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == item.GUID) + 1;//logic is wrong, should get index from global instruction list of recursive call name and guid -- fixed
+						Instruction recursiveReturnValue = this._instructionsToBeExecuted[recursiveReturnIndex];
+
+						int returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == functionGUID) + 1;
+						Instruction returnValue = this._instructionsToBeExecuted[returnIndex];
+
+						this._recursionQueue.Enqueue(new RecursionDatum { RecursionID = this._instructionsToBeExecuted[recursiveReturnIndex - 1].GUID, RecursionFunctionName = functionName, RecursiveReturnValue = recursiveReturnValue.GUID, OriginalReturnValue = returnValue.GUID });
+
+						this._currentRecursionDatum = this._recursionQueue.Peek();//////////how should I go about this?
+					}
+
+					if (item.Command == InstructionSet.End)
+						withinBegin = false;
+				}
+			}
+
+			//return string.Empty;
+		}
+
+		private void SaveVariableStates(string fromInstruction)
+		{
+			List<Instruction> function = (List<Instruction>)this._symbolTable[this._currentRecursionDatum.RecursionFunctionName];
+
+			bool withinBegin = false;
+			bool afterCall = false;
+			foreach (var instr in function) //this should probably be done during runtime so that the values actually exist
+			{
+				if (fromInstruction == InstructionSet.Begin)
+				{
+					if (instr.Command == InstructionSet.RValue)
+					{
+						if (!this._currentRecursionDatum.RecursiveValueStorage.ContainsKey(instr.Value))
+						{
+							this._currentRecursionDatum.RecursiveValueStorage.Add(instr.Value, new Stack<int>());
+						}
+
+						Console.WriteLine("---------------------------" + instr.Value);
+						Console.WriteLine(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));
+						this._currentRecursionDatum.RecursiveValueStorage[instr.Value].Push(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));
+					}
+					if (instr.Command == InstructionSet.Begin)
+						break;
+				}
+				else if (fromInstruction == InstructionSet.End)
+				{
+					if (instr.Command == InstructionSet.Begin)
+						withinBegin = true;
+					if (instr.Command == InstructionSet.Call)
+						afterCall = true;
+					if (withinBegin && afterCall && instr.Command == InstructionSet.RValue)
+					{
+						if (!this._currentRecursionDatum.RecursiveValueStorage.ContainsKey(instr.Value))
+						{
+							this._currentRecursionDatum.RecursiveValueStorage.Add(instr.Value, new Stack<int>());
+						}
+						Console.WriteLine("---------------------------" + instr.Value);
+						Console.WriteLine(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));
+
+						this._currentRecursionDatum.RecursiveValueStorage[instr.Value].Push(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));//this value is zero, is it local when it is placed in the dictionary?
+					}
+					if (withinBegin && instr.Command == InstructionSet.End)
+						withinBegin = false;
+					if (afterCall && !withinBegin && instr.Command == InstructionSet.LValue)
+					{
+						Console.WriteLine("---------------------------" + instr.Value);
+						Console.WriteLine(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));
+						this._currentRecursionDatum.RecursiveValueStorage[instr.Value].Push(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));//this value is zero, is it local when it is placed in the dictionary?
+					}
+				}
+			}
 		}
 
 		#endregion Helpers

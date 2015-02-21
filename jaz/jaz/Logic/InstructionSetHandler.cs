@@ -19,6 +19,7 @@ namespace jaz.Logic
 		private Queue<RecursionDatum> _recursionQueue;
 		private RecursionDatum _currentRecursionDatum;
 		private bool _currentlyInRecursion;
+		private int _exitCode;
 
 		public InstructionSetHandler()
 		{
@@ -27,14 +28,19 @@ namespace jaz.Logic
 			this._numMainCallsRemaining = 0;
 			this._recursionQueue = new Queue<RecursionDatum>();
 			this._recursiveCallsRemaining = 0;
+			this._exitCode = -1;
 		}
 
-		public void Run(List<Instruction> instructions)
+		public int Run(List<Instruction> instructions = null)
 		{
-			this._instructionsToBeExecuted = instructions;
+			if (this._exitCode != 0)
+			{
+				this._instructionsToBeExecuted = instructions;
 
-			this.SetInitialRun(this._instructionsToBeExecuted);//////////
+				this.SetInitialRun(this._instructionsToBeExecuted);//////////
+			}
 
+			return this._exitCode;
 			//	this.IterateThrough(this._instructionsToBeExecuted, false);
 		}
 
@@ -257,10 +263,13 @@ namespace jaz.Logic
 			int end = this._instructionsToBeExecuted.Count - 1;//make sure this number is not off by 1
 			List<Instruction> instructions = this._instructionsToBeExecuted.GetRange(start, end - start + 1);
 
-			this.IterateThrough(instructions, true);
+			if (this._exitCode != 0)
+			{
+				this.IterateThrough(instructions, true);
 
-			if (this._currentRecursionDatum != null)
-				this.SaveVariableStates(InstructionSet.End);
+				if (this._currentRecursionDatum != null)
+					this.SaveVariableStates(InstructionSet.End);
+			}
 		}
 
 		private void GoFalse(string nextInstruction)//guid or just label?
@@ -285,7 +294,8 @@ namespace jaz.Logic
 
 		private void Halt()
 		{
-			Environment.Exit(0);//should this be a complete system exit?
+			this._exitCode = 0;
+			//Environment.Exit(0);//should this be a complete system exit?
 		}
 
 		#endregion Control Flow
@@ -747,10 +757,14 @@ namespace jaz.Logic
 			{
 				var test = item.Command;//for testing
 				var test2 = item.Value;
-				if (!this._populatingFunction)/////most likely redundant when populateFunction is removed
+				if (this._exitCode != 0)/////most likely redundant when populateFunction is removed
 					this.ExecuteInstruction(item);
 				else
-					this.PopulateFunction(item);
+				{
+					this.Run();
+					break;
+				}
+				//this.PopulateFunction(item);
 			}
 		}
 

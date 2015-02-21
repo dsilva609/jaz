@@ -524,14 +524,17 @@ namespace jaz.Logic
 			//this._operationStack.Pop();/////////////////////////////////////////////probably needed to keep stack clean
 			int returnIndex = -1;
 
-			if (this._recursionQueue.Count != 0)
+			if (this._recursiveCallsRemaining == 0 && this._recursionQueue.Count != 0)
+				this._recursionQueue.Dequeue();
+
+			if (this._recursionQueue.Count != 0)//maybe if recursion calls remaining is 0?
 			{
 				Console.WriteLine("RETURNING FROM RECURSION");
 				RecursionDatum currentRecursionDatum = this._recursionQueue.Peek();
 				returnToInstruction = currentRecursionDatum.RecursiveReturnValue;
 				this._recursiveCallsRemaining--;
 
-				returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.GUID == returnToInstruction);//can be removed
+				returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.GUID == returnToInstruction);//can be removed?
 
 				if (this._currentRecursionDatum != null && this._currentRecursionDatum.RecursiveValueStorage.Count > 0)
 				{
@@ -558,9 +561,6 @@ namespace jaz.Logic
 
 				//need to decrement the recursion call count and pop the recursion value stack
 			}
-
-			if (this._recursiveCallsRemaining == 0 && this._recursionQueue.Count != 0)
-				this._recursionQueue.Dequeue();
 
 			if (this._recursionQueue.Count == 0)
 			{

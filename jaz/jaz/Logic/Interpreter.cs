@@ -16,9 +16,6 @@ namespace jaz.Logic
 
 		public Interpreter()
 		{
-			//	this._fileParser = new FileParser(filename);
-			//this._instructionParser = new InstructionParser();
-			//	this._instructionSetHandler = new InstructionSetHandler();
 			this._executionFiles = new List<string>
 			{
 				"demo.jaz",
@@ -34,9 +31,6 @@ namespace jaz.Logic
 
 		public void Execute()
 		{
-			//@"Resources\recfact.jaz"
-			//this.SelectFile();
-
 			string input;
 			int value = 0;
 			bool parsed;
@@ -49,7 +43,7 @@ namespace jaz.Logic
 				}
 
 				input = Console.ReadLine();
-				//if (!string.IsNullOrWhiteSpace(input))
+
 				parsed = Int32.TryParse(input, out value);
 
 				if (parsed && value > 0 && value <= this._executionFiles.Count)
@@ -79,7 +73,6 @@ namespace jaz.Logic
 					Console.WriteLine("Sorry, but the input was invalid. Try again.");
 				}
 			}
-			//@"Resources\recfact.jaz"
 		}
 	}
 }

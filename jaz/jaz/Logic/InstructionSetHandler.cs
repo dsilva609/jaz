@@ -256,7 +256,7 @@ namespace jaz.Logic
 				this.IterateThrough(instructions);//, true);
 
 				if (this._currentRecursionDatum != null)//////////////////////////////////////for factproc.jaz these instructions still execute after exit code is 0
-					this.SaveVariableStates(InstructionSet.End);
+					this.SaveVariableStates(InstructionSet.GoTo);
 			}
 		}
 
@@ -887,7 +887,7 @@ namespace jaz.Logic
 					if (instr.Command == InstructionSet.Begin)
 						break;
 				}
-				else if (fromInstruction == InstructionSet.End)
+				else if (fromInstruction == InstructionSet.GoTo)
 				{
 					if (instr.Command == InstructionSet.Begin)
 						withinBegin = true;

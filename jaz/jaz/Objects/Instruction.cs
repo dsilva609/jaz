@@ -9,7 +9,5 @@ namespace jaz.Objects
 		public string Value { get; set; }
 
 		public Guid GUID { get; set; }
-
-		//--add a IsLocalVariable boolean?
 	}
 }

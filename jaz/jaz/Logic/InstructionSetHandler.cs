@@ -510,7 +510,7 @@ namespace jaz.Logic
 			}
 			if (this._currentRecursionDatum == null)
 				returnIndex = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Call && x.GUID == returnToInstruction) + 1;
-			
+
 			Instruction returnValue = this._instructionsToBeExecuted[returnIndex];
 			this.GoTo(returnValue.Command, true, returnValue.GUID);
 		}
@@ -527,10 +527,9 @@ namespace jaz.Logic
 			 *				save the state of the variable
 			 *					create a unique variable
 			 *						guid?
-			 *						separate stack that pops top after each recursive call?
+			 *						separate`tack that pops top after each recursive call?
 			 *		should return to the originating call, most likely main
 			 */
-
 
 			if (!this._symbolTable.ContainsKey(functionName))
 				this.SearchAndPopulateFunction(functionName, functionGUID, true);
@@ -616,7 +615,7 @@ namespace jaz.Logic
 
 				if (nextInstructionFound)
 					mainInstructions.Add(instructions[index]);
-					
+
 				index++;
 			}
 
@@ -772,7 +771,7 @@ namespace jaz.Logic
 		private void DetermineIfRecursionExists(List<Instruction> function, string functionName, Guid functionGUID)
 		{
 			bool withinBegin = false;
-			
+
 			foreach (var item in function)
 			{
 				if (item.Command == InstructionSet.Begin)
@@ -825,10 +824,10 @@ namespace jaz.Logic
 				{
 					if (instr.Command == InstructionSet.Begin)
 						withinBegin = true;
-						
+
 					if (instr.Command == InstructionSet.Call)
 						afterCall = true;
-						
+
 					if (withinBegin && afterCall && instr.Command == InstructionSet.RValue)
 					{
 						if (!this._currentRecursionDatum.RecursiveValueStorage.ContainsKey(instr.Value))
@@ -838,7 +837,7 @@ namespace jaz.Logic
 					}
 					if (withinBegin && instr.Command == InstructionSet.End)
 						withinBegin = false;
-						
+
 					if (afterCall && !withinBegin && instr.Command == InstructionSet.LValue)
 						this._currentRecursionDatum.RecursiveValueStorage[instr.Value].Push(Convert.ToInt32(this._symbolTable[instr.Value].ToString()));
 				}

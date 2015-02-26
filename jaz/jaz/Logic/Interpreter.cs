@@ -47,6 +47,7 @@ namespace jaz.Logic
 				if (parsed && value > 0 && value <= this._executionFiles.Count)
 				{
 					Console.WriteLine("Running: " + this._executionFiles[value - 1]);
+					Console.WriteLine("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
 					this._fileParser = new FileParser(@"Resources\" + this._executionFiles[value - 1]);
 					this._data = this._fileParser.ExecuteRead();

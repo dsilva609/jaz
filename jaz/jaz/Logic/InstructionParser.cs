@@ -59,7 +59,6 @@ namespace jaz.Logic
 						currentCoupledIndentedLabelReturnGUID = instruction.GUID;
 
 					labelFrontWasTrimmed = true;
-
 				}
 				else
 				{

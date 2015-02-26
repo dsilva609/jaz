@@ -25,8 +25,6 @@ namespace jaz.Logic
 				"operatorsTest.jaz",
 				"recFact.jaz"
 			};
-
-			//--add test file selector
 		}
 
 		public void Execute()

@@ -24,15 +24,11 @@ namespace jaz.Logic
 		private void Parse(ref string[] data)
 		{
 			Guid currentBeginGUID = new Guid();
-			//Guid currentFunctionGUID = new Guid();
 			Guid currentCoupledUnindentedLabelReturnGUID = new Guid();
 			Guid currentCoupledIndentedLabelReturnGUID = new Guid();
 			bool labelFrontWasTrimmed = true;
 			bool returnFrontWasTrimmed = true;
-			//	bool callAndLabelAreCoupled = false;//is this needed?
-			//string currentCallName = string.Empty;
 
-			//	Guid guid;
 			foreach (var item in data)
 			{
 				string temp = string.Empty;
@@ -41,16 +37,15 @@ namespace jaz.Logic
 					temp = item.Trim();
 				else
 					temp = item;
-				//	guid = new Guid();
 
 				if (String.IsNullOrWhiteSpace(temp))
 				{
 					temp = null;
 					continue;
 				}
-				else if (temp.Contains(" ") && !temp.Contains("return")) //make sure that correct values are hitting correct statements
+				else if (temp.Contains(" ") && !temp.Contains("return"))
 				{
-					if (temp.Contains("label") && !char.IsWhiteSpace(temp, 0))//label starting with space or tab
+					if (temp.Contains("label") && !char.IsWhiteSpace(temp, 0))
 						labelFrontWasTrimmed = false;
 
 					temp = temp.Trim();
@@ -58,18 +53,17 @@ namespace jaz.Logic
 					instruction.Value = temp.Substring(temp.IndexOf(" ") + 1);
 					instruction.GUID = Guid.NewGuid();
 
-					if (instruction.Command == InstructionSet.Label && !labelFrontWasTrimmed)//indented label vs non indented?
+					if (instruction.Command == InstructionSet.Label && !labelFrontWasTrimmed)
 						currentCoupledUnindentedLabelReturnGUID = instruction.GUID;
 					else if (instruction.Command == InstructionSet.Label && labelFrontWasTrimmed)
 						currentCoupledIndentedLabelReturnGUID = instruction.GUID;
 
 					labelFrontWasTrimmed = true;
 
-					//Console.WriteLine(temp.Substring(0, temp.IndexOf(" ")));
 				}
 				else
 				{
-					if (temp.Contains("return") && !char.IsWhiteSpace(temp, 0))//return starts with space or tab
+					if (temp.Contains("return") && !char.IsWhiteSpace(temp, 0))
 						returnFrontWasTrimmed = false;
 
 					temp = temp.Trim();
@@ -79,15 +73,14 @@ namespace jaz.Logic
 					if (instruction.Command == InstructionSet.Begin)
 						currentBeginGUID = instruction.GUID;
 					if (instruction.Command == InstructionSet.End)
-						instruction.GUID = currentBeginGUID;//make sure these are not duplicated
+						instruction.GUID = currentBeginGUID;
 
-					if (instruction.Command == InstructionSet.Return && !returnFrontWasTrimmed)//calls are not always defined before labels, so labels and calls need to be coupled first then calls to label/couple pairs
-						instruction.GUID = currentCoupledUnindentedLabelReturnGUID;//make sure these are not duplicated
+					if (instruction.Command == InstructionSet.Return && !returnFrontWasTrimmed)
+						instruction.GUID = currentCoupledUnindentedLabelReturnGUID;
 					else if (instruction.Command == InstructionSet.Return && returnFrontWasTrimmed)
 						instruction.GUID = currentCoupledIndentedLabelReturnGUID;
 
 					returnFrontWasTrimmed = true;
-					//Console.WriteLine(temp);
 				}
 				this._instructionList.Add(instruction);
 
@@ -105,7 +98,7 @@ namespace jaz.Logic
 				Instruction label = this._instructionList.Find(x => x.Command == InstructionSet.Label && x.Value == item.Value);
 				Guid tempGuid = label.GUID;
 				this._instructionList[this._instructionList.IndexOf(label)].GUID = item.GUID;
-				this._instructionList[this._instructionList.FindIndex(x => x.Command == InstructionSet.Return && x.GUID == tempGuid)].GUID = item.GUID;//label within a label issue, couples to the closest label
+				this._instructionList[this._instructionList.FindIndex(x => x.Command == InstructionSet.Return && x.GUID == tempGuid)].GUID = item.GUID;
 			}
 		}
 	}

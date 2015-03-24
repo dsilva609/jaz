@@ -1,0 +1,94 @@
+show /*
+show Vincent Ashley
+show 02-14-2013
+show This program will calculate the nth fibonacci number
+show in the .jaz language
+show */
+
+show
+show The 20th Fibonacci number is:
+lvalue n1
+push 20
+:=
+lvalue n2
+rvalue n1
+:=
+
+rvalue n1
+push 1
+=
+gotrue finish1
+
+rvalue n1
+push 0
+<=
+gotrue finish0
+
+begin
+	lvalue a
+	rvalue n1
+	:=
+	lvalue b
+	rvalue n2
+	:=
+	call fibo
+	lvalue ret
+	rvalue n1
+	:=
+end
+
+rvalue ret
+print
+pop
+halt
+
+
+label fibo
+rvalue b
+gofalse final
+
+begin
+	lvalue a
+	rvalue a
+	push 1
+	-
+	:=
+	lvalue b
+	rvalue a
+	push 1
+	-
+	:=
+	call fibo
+	lvalue ret
+	rvalue n1
+	rvalue n2
+	+
+	:=
+	lvalue tmp
+	rvalue n1
+	:=
+end
+lvalue n2
+rvalue tmp
+:=
+lvalue n1
+rvalue ret
+:=
+return
+
+label final
+lvalue n1
+push 1
+:=
+lvalue n2
+push 0
+:=
+return
+
+label finish1
+show 1
+halt
+
+label finish0
+show 0
+halt

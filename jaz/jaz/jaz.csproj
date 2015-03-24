@@ -65,6 +65,9 @@
     <None Include="Resources\factProc.out">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Resources\fibonacci.jaz">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Resources\foo.jaz">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

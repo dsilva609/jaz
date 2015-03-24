@@ -708,7 +708,7 @@ namespace jaz.Logic
 				if (item.Command == InstructionSet.GoFalse || item.Command == InstructionSet.GoTrue)
 				{
 					int goStart = this._instructionsToBeExecuted.FindIndex(x => x.Command == InstructionSet.Label && x.Value == item.Value);
-					while (this._instructionsToBeExecuted[goStart].Command != InstructionSet.Return)
+					while (goStart < this._instructionsToBeExecuted.Count && (this._instructionsToBeExecuted[goStart].Command != InstructionSet.Return || this._instructionsToBeExecuted[goStart].Command != InstructionSet.Halt))
 					{
 						if (this._instructionsToBeExecuted[goStart].Command == InstructionSet.LValue)
 							this._instructionsToBeExecuted[goStart].Value = labelName + "::" + this._instructionsToBeExecuted[goStart].Value;

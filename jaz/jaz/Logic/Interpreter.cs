@@ -23,7 +23,8 @@ namespace jaz.Logic
 				"foo.jaz",
 				"guessTheAnswer.jaz",
 				"operatorsTest.jaz",
-				"recFact.jaz"
+				"recFact.jaz",
+				"fibonacci.jaz"
 			};
 		}
 
